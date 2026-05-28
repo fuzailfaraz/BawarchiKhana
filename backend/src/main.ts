@@ -4,12 +4,15 @@ import { json, urlencoded } from 'express';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
+
   app.enableCors({
-    origin: 'http://localhost:3000',
+    origin: [
+      'http://localhost:3000', // for local dev
+      'https://bawarchi-khana-pi.vercel.app', // your Vercel frontend
+    ],
     credentials: true,
   });
-  
-  // Increase payload limit for base64 images (Vision API)
+
   app.use(json({ limit: '10mb' }));
   app.use(urlencoded({ extended: true, limit: '10mb' }));
 
