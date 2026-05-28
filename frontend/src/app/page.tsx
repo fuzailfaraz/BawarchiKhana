@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { ChefHat, Clock, Sparkles, Zap, UtensilsCrossed, ArrowRight, Play, Camera, Mic, CheckCircle } from "lucide-react";
+import { ChefHat, Clock, Sparkles, Zap, UtensilsCrossed, ArrowRight, Play, Camera, Mic, CheckCircle, Menu, X } from "lucide-react";
 import { MagneticButton } from "@/components/ui/MagneticButton";
 import { ScrollReveal } from "@/components/ui/ScrollReveal";
 import { CinematicCursor } from "@/components/ui/CinematicCursor";
@@ -21,6 +21,7 @@ export default function LandingPage() {
   const videoRef = useRef<HTMLVideoElement>(null);
   
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   useEffect(() => {
     if (typeof window !== 'undefined' && localStorage.getItem('token')) {
@@ -99,22 +100,26 @@ export default function LandingPage() {
       <header className="fixed top-0 w-full z-50 border-b border-white/5 bg-transparent">
         <div className="absolute inset-0 bg-gradient-to-b from-black/80 via-black/20 to-transparent z-0 pointer-events-none" />
         <div className="w-full max-w-7xl mx-auto px-6 md:px-12 h-24 flex items-center justify-between relative z-10">
-          <Link href="/" className="flex items-center gap-3 group cursor-pointer z-10">
+          <Link href="/" className="flex items-center gap-3 group cursor-pointer z-10 shrink-0">
             <div className="relative w-10 h-10 group-hover:scale-105 transition-transform drop-shadow-[0_0_15px_rgba(245,158,11,0.5)]">
               <Image src="/BK.png" alt="Logo" fill className="object-contain mix-blend-screen" />
             </div>
-            <span className="text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r from-amber-400 to-orange-400 font-heading tracking-tight">BawarchiKhana</span>
+            <span className="text-xl sm:text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r from-amber-400 to-orange-400 font-heading tracking-tight">BawarchiKhana</span>
           </Link>
-          <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[100] lg:absolute lg:top-1/2 lg:bottom-auto lg:-translate-y-1/2 lg:block w-max max-w-[95vw] overflow-x-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] shadow-[0_0_40px_rgba(0,0,0,0.8)] lg:shadow-none rounded-full">
+          
+          {/* Desktop Navigation Pill */}
+          <div className="hidden lg:block absolute left-1/2 -translate-x-1/2 top-1/2 -translate-y-1/2 w-max">
             <NavHeader />
           </div>
-          <div className="flex items-center gap-6 z-10">
+          
+          {/* Desktop Auth / CTA */}
+          <div className="hidden lg:flex items-center gap-6 z-10 shrink-0">
             {isLoggedIn ? (
               <>
                 <button onClick={() => {
                   localStorage.removeItem('token');
                   setIsLoggedIn(false);
-                }} className="hidden sm:block text-sm font-medium text-neutral-400 hover:text-white transition-colors">
+                }} className="text-sm font-medium text-neutral-400 hover:text-white transition-colors">
                   Log Out
                 </button>
                 <MagneticButton>
@@ -125,7 +130,7 @@ export default function LandingPage() {
               </>
             ) : (
               <>
-                <Link href="/auth" className="hidden sm:block text-sm font-medium text-neutral-400 hover:text-white transition-colors">
+                <Link href="/auth" className="text-sm font-medium text-neutral-400 hover:text-white transition-colors">
                   Log In
                 </Link>
                 <MagneticButton>
@@ -136,7 +141,52 @@ export default function LandingPage() {
               </>
             )}
           </div>
+
+          {/* Mobile Menu Toggle */}
+          <button 
+            className="lg:hidden p-2 -mr-2 text-neutral-300 hover:text-amber-400 transition-colors z-20 shrink-0"
+            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+          >
+            {isMobileMenuOpen ? <X size={28} /> : <Menu size={28} />}
+          </button>
         </div>
+
+        {/* Mobile Dropdown Menu */}
+        {isMobileMenuOpen && (
+          <div className="lg:hidden absolute top-full left-0 w-full bg-[#050505]/95 backdrop-blur-xl border-b border-white/10 flex flex-col items-center py-8 gap-6 shadow-2xl">
+            <Link href="/" onClick={() => setIsMobileMenuOpen(false)} className="text-xl font-semibold text-neutral-300 hover:text-amber-400 transition-colors">Home</Link>
+            <Link href="/#features" onClick={() => setIsMobileMenuOpen(false)} className="text-xl font-semibold text-neutral-300 hover:text-amber-400 transition-colors">Features</Link>
+            <Link href="/#pricing" onClick={() => setIsMobileMenuOpen(false)} className="text-xl font-semibold text-neutral-300 hover:text-amber-400 transition-colors">Pricing</Link>
+            <Link href="/about" onClick={() => setIsMobileMenuOpen(false)} className="text-xl font-semibold text-neutral-300 hover:text-amber-400 transition-colors">About</Link>
+            <Link href="/contact" onClick={() => setIsMobileMenuOpen(false)} className="text-xl font-semibold text-neutral-300 hover:text-amber-400 transition-colors">Contact</Link>
+            
+            <div className="w-16 h-[1px] bg-white/10 my-2"></div>
+            
+            {isLoggedIn ? (
+              <>
+                <Link href="/dashboard" onClick={() => setIsMobileMenuOpen(false)} className="w-[200px] text-center bg-gradient-to-r from-amber-500 to-orange-500 text-black px-6 py-3 rounded-full font-bold text-lg hover:scale-105 transition-transform shadow-[0_0_20px_rgba(245,158,11,0.3)]">
+                  Dashboard
+                </Link>
+                <button onClick={() => {
+                  localStorage.removeItem('token');
+                  setIsLoggedIn(false);
+                  setIsMobileMenuOpen(false);
+                }} className="text-lg font-medium text-neutral-400 hover:text-white transition-colors">
+                  Log Out
+                </button>
+              </>
+            ) : (
+              <>
+                <Link href="/auth" onClick={() => setIsMobileMenuOpen(false)} className="w-[200px] text-center bg-gradient-to-r from-amber-500 to-orange-500 text-black px-6 py-3 rounded-full font-bold text-lg hover:scale-105 transition-transform shadow-[0_0_20px_rgba(245,158,11,0.3)]">
+                  Start Free
+                </Link>
+                <Link href="/auth" onClick={() => setIsMobileMenuOpen(false)} className="text-lg font-medium text-neutral-400 hover:text-white transition-colors">
+                  Log In
+                </Link>
+              </>
+            )}
+          </div>
+        )}
       </header>
 
       {/* Cinematic Full-Screen Hero Section */}
