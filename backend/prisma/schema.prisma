@@ -1,0 +1,131 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                    String    @id @default(uuid())
+  phone                 String    @unique
+  name                  String?
+  skillLevel            String    @default("beginner")
+  dietaryRestrictions   String[]  @default([])
+  spicyTolerance        Int       @default(3) // 1-5 scale
+  isPremium             Boolean   @default(false)
+  subscriptionExpiresAt DateTime?
+  currentPantry         String[]  @default([])
+  quotaUsed             Int       @default(0)
+  quotaResetDate        DateTime  @default(now())
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+  
+  suggestions           SuggestionHistory[]
+  savedRecipes          SavedRecipe[]
+  cookingSessions       CookingSession[]
+  payments              Payment[]
+  connectedAccounts     ConnectedAccount[]
+  driveExports          DriveExport[]
+}
+
+model SuggestionHistory {
+  id          String   @id @default(uuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id])
+  ingredients String[]
+  suggestions Json
+  createdAt   DateTime @default(now())
+  
+  @@index([userId, createdAt])
+}
+
+model SavedRecipe {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  dishName  String
+  recipe    Json
+  savedAt   DateTime @default(now())
+  driveExports DriveExport[]
+  
+  @@index([userId])
+}
+
+model CookingSession {
+  id          String   @id @default(uuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id])
+  dishName    String
+  ingredients String[]
+  recipe      Json
+  rating      Int?
+  feedback    String?
+  tags        String[] @default([])
+  startedAt   DateTime @default(now())
+  completedAt DateTime?
+  
+  @@index([userId, startedAt])
+}
+
+model Payment {
+  id             String   @id @default(uuid())
+  userId         String
+  user           User     @relation(fields: [userId], references: [id])
+  amount         Float
+  currency       String   @default("PKR")
+  paymentMethod  String
+  transactionId  String   @unique
+  jazzcashTxnId  String?
+  status         String   // pending, completed, failed
+  createdAt      DateTime @default(now())
+  
+  @@index([userId, status])
+}
+
+model OtpVerification {
+  id         String   @id @default(uuid())
+  phone      String
+  otp        String
+  expiresAt  DateTime
+  verified   Boolean  @default(false)
+  attempts   Int      @default(0)
+  createdAt  DateTime @default(now())
+  
+  @@index([phone])
+}
+
+model ConnectedAccount {
+  id                String   @id @default(uuid())
+  userId            String
+  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  provider          String   // e.g., "google"
+  providerAccountId String
+  accessToken       String?  @db.Text
+  refreshToken      String?  @db.Text
+  expiresAt         Int?
+  tokenType         String?
+  scope             String?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  @@unique([provider, providerAccountId])
+  @@index([userId])
+}
+
+model DriveExport {
+  id         String   @id @default(uuid())
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  recipeId   String
+  recipe     SavedRecipe @relation(fields: [recipeId], references: [id], onDelete: Cascade)
+  driveLink  String   // Link to exported file
+  exportType String   // e.g., "pdf"
+  createdAt  DateTime @default(now())
+  
+  @@index([userId])
+}
