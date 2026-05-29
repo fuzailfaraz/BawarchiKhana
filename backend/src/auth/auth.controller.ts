@@ -7,16 +7,16 @@ export class AuthController {
 
   @Post('request-otp')
   @HttpCode(HttpStatus.OK)
-  async requestOtp(@Body('phoneNumber') phoneNumber: string) {
-    return this.authService.requestOtp(phoneNumber);
+  async requestOtp(@Body('phone') phone: string) {
+    return this.authService.requestOtp(phone);
   }
 
   @Post('verify-otp')
   @HttpCode(HttpStatus.OK)
   async verifyOtp(
-    @Body('phoneNumber') phoneNumber: string,
+    @Body('phone') phone: string,
     @Body('otp') otp: string,
   ) {
-    return this.authService.verifyOtp(phoneNumber, otp);
+    return this.authService.verifyOtp(phone, otp);
   }
 }
