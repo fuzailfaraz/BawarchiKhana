@@ -375,7 +375,7 @@ export default function DashboardPage() {
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
-            className="bg-neutral-900/60 backdrop-blur-2xl rounded-[2.5rem] p-8 sm:p-12 shadow-2xl border border-white/5 relative overflow-hidden"
+            className="bg-neutral-900/60 backdrop-blur-2xl rounded-[2rem] p-6 sm:p-10 shadow-2xl border border-white/5 relative overflow-hidden"
           >
             {/* Inner Glow */}
             <div className="absolute inset-0 bg-gradient-to-b from-white/[0.02] to-transparent pointer-events-none" />
@@ -395,16 +395,16 @@ export default function DashboardPage() {
               </button>
             </div>
 
-            <div className="dashboard-stagger text-center mb-10 relative z-10 mt-6">
-              <h1 className="text-4xl md:text-5xl font-black text-white font-heading mb-4 tracking-tight">
+            <div className="dashboard-stagger text-center mb-8 relative z-10 mt-6">
+              <h1 className="text-3xl md:text-5xl font-black text-white font-heading mb-4 tracking-tight">
                 {isUrdu ? 'آپ کے کچن میں کیا ہے؟' : "What's in your kitchen?"}
               </h1>
               {isLeftoverMode ? (
-                <p className="text-green-400 font-medium text-lg animate-pulse">
+                <p className="text-green-400 font-medium text-base md:text-lg animate-pulse">
                   🌿 Using only what you have to eliminate waste
                 </p>
               ) : (
-                <p className="text-neutral-400 text-lg max-w-lg mx-auto">
+                <p className="text-neutral-400 text-base md:text-lg max-w-lg mx-auto">
                   {isUrdu 
                     ? 'اپنے اجزاء درج کریں (کوما لگا کر)، اور ہمارا AI بہترین ترکیب تجویز کرے گا۔' 
                     : 'Enter your ingredients separated by commas, and let our AI craft the perfect meal.'}
@@ -420,7 +420,7 @@ export default function DashboardPage() {
                   placeholder={isUrdu ? 'مثلاً چکن، ٹماٹر، پیاز...' : 'e.g., Chicken, Palak, Tomatoes...'}
                   value={currentInput}
                   onChange={(e) => setCurrentInput(e.target.value)}
-                  className={`relative z-10 w-full bg-black/80 border-white/10 focus:border-amber-500/50 text-white placeholder-neutral-500 pl-6 pr-28 py-7 text-lg rounded-2xl shadow-inner transition-all ${isUrdu ? 'text-right' : ''}`}
+                  className={`relative z-10 w-full bg-black/80 border-white/10 focus:border-amber-500/50 text-white placeholder-neutral-500 pl-6 pr-24 py-5 text-base sm:text-lg rounded-2xl shadow-inner transition-all ${isUrdu ? 'text-right' : ''}`}
                 />
                 
                 {/* Voice & Camera Input Overlays */}
@@ -428,7 +428,7 @@ export default function DashboardPage() {
                   <button 
                     type="button" 
                     onClick={toggleListen}
-                    className={`p-2.5 rounded-xl transition-all duration-300 ${isListening ? 'bg-red-500/20 text-red-400 animate-pulse scale-110' : 'text-neutral-400 hover:bg-white/10 hover:text-amber-400'}`}
+                    className={`p-2 rounded-xl transition-all duration-300 ${isListening ? 'bg-red-500/20 text-red-400 animate-pulse scale-110' : 'text-neutral-400 hover:bg-white/10 hover:text-amber-400'}`}
                     title="Voice Input"
                   >
                     {isListening ? <MicOff className="w-5 h-5" /> : <Mic className="w-5 h-5" />}
@@ -437,7 +437,7 @@ export default function DashboardPage() {
                   <button 
                     type="button" 
                     onClick={() => fileInputRef.current?.click()}
-                    className="p-2.5 rounded-xl text-neutral-400 hover:bg-white/10 hover:text-amber-400 transition-all duration-300"
+                    className="p-2 rounded-xl text-neutral-400 hover:bg-white/10 hover:text-amber-400 transition-all duration-300"
                     title="Scan Fridge"
                   >
                     <Camera className="w-5 h-5" />
@@ -452,7 +452,7 @@ export default function DashboardPage() {
                 </div>
               </div>
 
-              <Button type="submit" size="lg" className="px-8 rounded-full shadow-[0_0_20px_rgba(245,158,11,0.3)] bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-black font-bold h-[58px] transition-transform transform hover:scale-105 active:scale-95 z-20 border-none">
+              <Button type="submit" size="lg" className="px-8 rounded-2xl shadow-[0_0_20px_rgba(245,158,11,0.3)] bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-black font-bold h-auto transition-transform transform hover:scale-105 active:scale-95 z-20 border-none">
                 <span className="hidden sm:inline">Add</span>
               </Button>
             </form>

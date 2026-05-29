@@ -221,21 +221,21 @@ export default function LandingPage() {
             <div className="h-[1px] w-8 bg-amber-500/50"></div>
           </div>
           
-          <h1 className="text-6xl sm:text-7xl lg:text-[7.5rem] font-black tracking-tighter text-white leading-[1.1] mb-8 py-2" style={{ perspective: "1000px" }}>
+          <h1 className="text-5xl sm:text-6xl md:text-7xl lg:text-[6rem] font-black tracking-tighter text-white leading-[1.1] mb-6 py-2" style={{ perspective: "1000px" }}>
             <div className="hero-title-line origin-bottom">Stop Wondering,</div>
-            <div className="hero-title-line origin-bottom text-transparent bg-clip-text bg-gradient-to-r from-amber-400 via-orange-500 to-rose-500 pb-4">
+            <div className="hero-title-line origin-bottom text-transparent bg-clip-text bg-gradient-to-r from-amber-400 via-orange-500 to-rose-500 pb-2 sm:pb-4">
               Start Cooking.
             </div>
           </h1>
           
-          <p className="hero-desc text-lg sm:text-2xl text-neutral-300 max-w-3xl mx-auto leading-relaxed mb-12 font-light">
+          <p className="hero-desc text-base sm:text-xl text-neutral-300 max-w-2xl mx-auto leading-relaxed mb-10 font-light">
             Transform your everyday pantry ingredients into award-winning meals. 
             Pakistan's first smart cooking assistant tailored for authentic, zero-waste kitchens.
           </p>
           
           <div className="hero-cta flex flex-col sm:flex-row items-center gap-6 justify-center">
             <MagneticButton>
-              <Link href={isLoggedIn ? "/dashboard" : "/auth"} className="group relative flex items-center gap-4 bg-white/5 border border-white/10 text-white px-10 py-5 rounded-full font-bold text-lg transition-all hover:bg-amber-500/10 hover:border-amber-500/50 hover:text-amber-400 shadow-[0_0_30px_rgba(0,0,0,0.5)] hover:shadow-[0_0_50px_rgba(245,158,11,0.4)]">
+              <Link href={isLoggedIn ? "/dashboard" : "/auth"} className="group relative flex items-center gap-3 bg-white/5 border border-white/10 text-white px-8 py-4 rounded-full font-bold text-base transition-all hover:bg-amber-500/10 hover:border-amber-500/50 hover:text-amber-400 shadow-[0_0_30px_rgba(0,0,0,0.5)] hover:shadow-[0_0_50px_rgba(245,158,11,0.4)]">
                 <span className="relative z-10">{isLoggedIn ? "Go to Dashboard" : "Start Cooking Free"}</span>
                 <ArrowRight className="w-5 h-5 relative z-10 group-hover:translate-x-1 transition-transform" />
               </Link>
