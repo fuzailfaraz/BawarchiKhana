@@ -1,6 +1,7 @@
 import fetch from "node-fetch";
+import "dotenv/config";
 
-const API_KEY = "AIzaSyDWQsq1snfwxl7RaiuVP6Hr0tvBz0wq68s"; // your key
+const API_KEY = process.env.GeminiAI_API_KEY; // Using key from .env
 
 async function listModels() {
     const res = await fetch("https://generativelanguage.googleapis.com/v1beta/models", {
