@@ -320,7 +320,7 @@ export default function DashboardPage() {
   };
 
   return (
-    <div className={`min-h-screen bg-transparent flex flex-col ${isUrdu ? 'font-urdu dir-rtl' : ''} text-neutral-100 overflow-hidden relative`}>
+    <div className={`min-h-screen bg-transparent flex flex-col ${isUrdu ? 'font-urdu dir-rtl' : ''} text-neutral-100 overflow-x-hidden relative`}>
       
       {/* Dynamic Video Background */}
       <div className="fixed inset-0 w-full h-full -z-10 overflow-hidden pointer-events-none">
@@ -366,9 +366,37 @@ export default function DashboardPage() {
             >
               {isUrdu ? 'English' : 'اردو'}
             </Button>
-            <Button variant="ghost" size="sm" onClick={handleLogout} className="text-xs font-semibold px-4 rounded-full border border-white/10 text-neutral-300 bg-white/5 hover:bg-red-500/10 hover:border-red-500/50 hover:text-red-400 shadow-[0_0_20px_rgba(0,0,0,0.5)] backdrop-blur-md transition-all group">
-              <span className="hidden sm:inline">{isUrdu ? 'لاگ آؤٹ' : 'Logout'}</span>
+            <Button variant="ghost" size="sm" onClick={handleLogout} className="hidden sm:flex text-xs font-semibold px-4 rounded-full border border-white/10 text-neutral-300 bg-white/5 hover:bg-red-500/10 hover:border-red-500/50 hover:text-red-400 shadow-[0_0_20px_rgba(0,0,0,0.5)] backdrop-blur-md transition-all group">
+              <span>{isUrdu ? 'لاگ آؤٹ' : 'Logout'}</span>
             </Button>
+
+            {/* Profile Button (Desktop) */}
+            <button 
+              onClick={() => router.push('/profile')}
+              className="hidden xl:flex w-10 h-10 rounded-full bg-gradient-to-br from-neutral-800 to-neutral-900 border border-neutral-700 items-center justify-center hover:border-amber-500 transition-colors shadow-md"
+            >
+              <User className="w-5 h-5 text-neutral-400" />
+            </button>
+
+            {/* Hamburger Menu Mobile */}
+            <div className="relative xl:hidden flex items-center">
+              <button 
+                onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+                className="w-10 h-10 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center text-white hover:bg-white/10 transition-colors"
+              >
+                {isMobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+              </button>
+              
+              {isMobileMenuOpen && (
+                <div className="absolute top-12 right-0 w-48 bg-neutral-900 border border-white/10 rounded-2xl shadow-2xl py-2 flex flex-col z-[200]">
+                  <Link href="/classics" className="px-4 py-3 text-sm font-semibold text-white hover:bg-white/5">Classics</Link>
+                  <Link href="/history" className="px-4 py-3 text-sm font-semibold text-white hover:bg-white/5">{isUrdu ? 'تاریخ' : 'History'}</Link>
+                  <Link href="/sustainability" className="px-4 py-3 text-sm font-semibold text-white hover:bg-white/5">Sustainability</Link>
+                  <Link href="/profile" className="px-4 py-3 text-sm font-semibold text-amber-400 hover:bg-white/5 border-t border-white/10 mt-1">{isUrdu ? 'پروفائل' : 'Profile'}</Link>
+                  <button onClick={handleLogout} className="px-4 py-3 text-sm font-semibold text-red-400 hover:bg-red-500/10 text-left border-t border-white/10">{isUrdu ? 'لاگ آؤٹ' : 'Logout'}</button>
+                </div>
+              )}
+            </div>
           </div>
         </div>
       </header>
