@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
-import { ChefHat, LogOut, Plus, Sparkles, X, Clock, Flame, Utensils, Mic, MicOff, Camera, User, Globe, Activity, ToggleLeft, ToggleRight, Leaf, Info } from 'lucide-react';
+import { ChefHat, LogOut, Plus, Sparkles, X, Clock, Flame, Utensils, Mic, MicOff, Camera, ImagePlus, User, Globe, Activity, ToggleLeft, ToggleRight, Leaf, Info } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/Card';
@@ -38,6 +38,7 @@ export default function DashboardPage() {
   const [maxTime, setMaxTime] = useState('🕒 Any');
   
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const cameraInputRef = useRef<HTMLInputElement>(null);
 
   // Sounds
   const [playPop] = useSound('data:audio/mp3;base64,//NExAAAAANIAAAAAExBTUUzLjEwMKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq', { volume: 0.3 });
@@ -436,12 +437,28 @@ export default function DashboardPage() {
                   <div className="w-px h-6 bg-white/10 mx-1"></div>
                   <button 
                     type="button" 
-                    onClick={() => fileInputRef.current?.click()}
+                    onClick={() => cameraInputRef.current?.click()}
                     className="p-2 rounded-xl text-neutral-400 hover:bg-white/10 hover:text-amber-400 transition-all duration-300"
-                    title="Scan Fridge"
+                    title="Take Photo"
                   >
                     <Camera className="w-5 h-5" />
                   </button>
+                  <button 
+                    type="button" 
+                    onClick={() => fileInputRef.current?.click()}
+                    className="p-2 rounded-xl text-neutral-400 hover:bg-white/10 hover:text-amber-400 transition-all duration-300"
+                    title="Upload Image"
+                  >
+                    <ImagePlus className="w-5 h-5" />
+                  </button>
+                  <input 
+                    type="file" 
+                    accept="image/*" 
+                    capture="environment"
+                    className="hidden" 
+                    ref={cameraInputRef} 
+                    onChange={handleImageUpload}
+                  />
                   <input 
                     type="file" 
                     accept="image/*" 

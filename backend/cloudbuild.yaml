@@ -1,0 +1,13 @@
+steps:
+  - name: 'gcr.io/cloud-builders/docker'
+    args:
+      - 'build'
+      - '-t'
+      - 'asia-south1-docker.pkg.dev/project-eded92db-f2c8-481e-b0c/bawarchikhana-repo/bawarchikhana-backend:latest'
+      - '.'
+  - name: 'gcr.io/cloud-builders/docker'
+    args:
+      - 'push'
+      - 'asia-south1-docker.pkg.dev/project-eded92db-f2c8-481e-b0c/bawarchikhana-repo/bawarchikhana-backend:latest'
+images:
+  - 'asia-south1-docker.pkg.dev/project-eded92db-f2c8-481e-b0c/bawarchikhana-repo/bawarchikhana-backend:latest'

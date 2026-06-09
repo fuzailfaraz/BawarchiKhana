@@ -22,7 +22,7 @@ export default function PremiumPage() {
       setLoading(true);
       const token = localStorage.getItem('token');
       
-      const checkoutRes = await axios.post('http://localhost:3001/payments/checkout', {
+      const checkoutRes = await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/payments/checkout`, {
         method: paymentMethod,
         amount: 999
       }, {
@@ -31,7 +31,7 @@ export default function PremiumPage() {
       
       const { transactionId } = checkoutRes.data;
 
-      await axios.post('http://localhost:3001/payments/webhook', {
+      await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/payments/webhook`, {
         transactionId,
         status: 'completed'
       });
