@@ -79,7 +79,7 @@ export class AiService {
 
     try {
       const model = this.genAI.getGenerativeModel({ 
-        model: 'models/gemini-1.5-flash',
+        model: 'models/gemini-2.5-flash-lite',
         generationConfig: {
           maxOutputTokens: 3000,
           temperature: 0.2,
@@ -175,7 +175,7 @@ export class AiService {
         this.logger.warn('Gemini 2.5 Flash overloaded, retrying with Gemini Flash Latest...');
         try {
           const fallbackModel = this.genAI.getGenerativeModel({ 
-            model: 'models/gemini-flash-latest',
+            model: 'models/gemini-2.5-flash-lite',
             generationConfig: {
               responseMimeType: 'application/json'
             }
@@ -258,7 +258,7 @@ export class AiService {
         Do not include markdown blocks or any other text.
       `;
 
-      const model = this.genAI.getGenerativeModel({ model: 'models/gemini-1.5-flash' });
+      const model = this.genAI.getGenerativeModel({ model: 'models/gemini-2.5-flash-lite' });
       
       const imagePart = {
         inlineData: {
@@ -287,7 +287,7 @@ export class AiService {
 
   async chatWithCopilot(message: string, recipeContext: any, history: any[] = []) {
     try {
-      const model = this.genAI.getGenerativeModel({ model: 'models/gemini-1.5-flash' });
+      const model = this.genAI.getGenerativeModel({ model: 'models/gemini-2.5-flash-lite' });
       const chat = model.startChat({
         history: history.map(msg => ({
           role: msg.role,
@@ -330,7 +330,7 @@ export class AiService {
         }
       `;
 
-      const model = this.genAI.getGenerativeModel({ model: 'models/gemini-1.5-flash' });
+      const model = this.genAI.getGenerativeModel({ model: 'models/gemini-2.5-flash-lite' });
       const result = await model.generateContent(prompt);
       const text = result.response.text();
       
@@ -375,7 +375,7 @@ export class AiService {
       `;
 
       const model = this.genAI.getGenerativeModel({ 
-        model: 'models/gemini-1.5-flash',
+        model: 'models/gemini-2.5-flash-lite',
         generationConfig: {
           responseMimeType: 'application/json'
         }
@@ -442,7 +442,7 @@ export class AiService {
         }
       `;
       const model = this.genAI.getGenerativeModel({ 
-        model: 'models/gemini-1.5-flash',
+        model: 'models/gemini-2.5-flash-lite',
         generationConfig: { responseMimeType: 'application/json' }
       });
       const result = await model.generateContent(prompt);
