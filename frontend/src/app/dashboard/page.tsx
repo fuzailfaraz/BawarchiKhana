@@ -61,7 +61,7 @@ export default function DashboardPage() {
         return;
       }
       try {
-        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'}/users/profile`, {
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/users/profile`, {
           headers: { Authorization: `Bearer ${token}` }
         });
         if (res.ok) {

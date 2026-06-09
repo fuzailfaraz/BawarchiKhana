@@ -5,12 +5,12 @@ import { json, urlencoded } from 'express';
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
-  // ✅ Enable CORS for local dev + Vercel frontend
   app.enableCors({
     origin: [
-      'http://localhost:3000',
+      process.env.FRONTEND_URL,
       'https://bawarchi-khana-pi.vercel.app',
-    ],
+      'http://localhost:3000'
+    ].filter(Boolean),
     credentials: true,
   });
 

@@ -30,7 +30,7 @@ export default function HistoryPage() {
           return;
         }
 
-        const response = await axios.get(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'}/users/history`, {
+        const response = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/users/history`, {
           headers: { Authorization: `Bearer ${token}` }
         });
         
