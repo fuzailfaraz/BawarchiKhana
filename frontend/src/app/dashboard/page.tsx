@@ -452,8 +452,8 @@ export default function DashboardPage() {
                 </div>
               </div>
 
-              <Button type="submit" size="lg" className="px-8 rounded-2xl shadow-[0_0_20px_rgba(245,158,11,0.3)] bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-black font-bold h-auto transition-transform transform hover:scale-105 active:scale-95 z-20 border-none">
-                <span className="hidden sm:inline">Add</span>
+              <Button type="submit" size="lg" className="px-6 sm:px-8 rounded-2xl shadow-[0_0_20px_rgba(245,158,11,0.3)] bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-black font-bold h-auto transition-transform transform hover:scale-105 active:scale-95 z-20 border-none">
+                Add
               </Button>
             </form>
 

@@ -200,8 +200,8 @@ export default function LandingPage() {
             loop 
             muted 
             playsInline
-            className="video-bg absolute w-[110vw] h-[130vh] object-cover opacity-70 max-w-none"
-            style={{ top: '-15vh', left: '-5vw' }}
+            className="video-bg absolute min-w-full min-h-full object-cover opacity-70"
+            style={{ top: '50%', left: '50%', transform: 'translate(-50%, -50%)' }}
           >
             <source src="/HeroVid.mp4" type="video/mp4" />
           </video>
@@ -407,7 +407,6 @@ export default function LandingPage() {
           </div>
           <div className="pt-8 border-t border-white/10 flex flex-col md:flex-row items-center justify-between gap-6 text-sm font-medium text-neutral-500">
             <p>© 2026 BawarchiKhana by Fuzail Faraz. All rights reserved.</p>
-            <p className="flex items-center gap-2">Designed with <HeartIcon className="w-4 h-4 text-amber-500" /> in Pakistan</p>
           </div>
         </div>
       </footer>

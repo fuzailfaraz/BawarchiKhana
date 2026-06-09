@@ -329,7 +329,7 @@ export default function RecipePage() {
                 👑 BawarchiKhana Classic
               </div>
             )}
-            <h1 className="text-5xl sm:text-6xl font-black text-transparent bg-clip-text bg-gradient-to-r from-amber-400 via-orange-400 to-rose-400 font-heading mb-6 tracking-tight drop-shadow-sm">
+            <h1 className="text-4xl sm:text-5xl md:text-6xl font-black text-transparent bg-clip-text bg-gradient-to-r from-amber-400 via-orange-400 to-rose-400 font-heading mb-6 tracking-tight drop-shadow-sm leading-tight">
               {recipe.dishName}
             </h1>
             <div className="flex flex-wrap justify-center gap-4">
@@ -337,7 +337,7 @@ export default function RecipePage() {
               <Badge variant="outline" className="bg-white/5 border-white/10 text-neutral-300 backdrop-blur-md px-4 py-2 text-sm"><Clock className="w-4 h-4 mr-2 text-blue-400" /> Cook: {recipe.cookTime}</Badge>
               <Badge variant="outline" className="bg-white/5 border-white/10 text-neutral-300 backdrop-blur-md px-4 py-2 text-sm"><Flame className="w-4 h-4 mr-2 text-red-500" /> {recipe.difficulty}</Badge>
             </div>
-            <div className="flex justify-center gap-4 mt-6">
+            <div className="flex flex-col sm:flex-row justify-center items-center gap-3 sm:gap-4 mt-6">
               <ExportToDriveButton recipeId={session.id} recipeName={recipe.dishName} />
               <ExportToSheetsButton recipeId={session.id} recipeName={recipe.dishName} />
             </div>
@@ -453,7 +453,7 @@ export default function RecipePage() {
                         }`}>
                         {isCompleted ? <Check className="w-6 h-6" /> : index + 1}
                       </div>
-                      <p className={`text-lg leading-relaxed pt-2 transition-colors duration-300 ${isCompleted ? 'text-neutral-500 line-through' : 'text-neutral-200'}`}>
+                      <p className={`text-base md:text-lg leading-relaxed pt-2 transition-colors duration-300 ${isCompleted ? 'text-neutral-500 line-through' : 'text-neutral-200'}`}>
                         {step}
                       </p>
                     </motion.div>
@@ -635,7 +635,7 @@ export default function RecipePage() {
 
             {/* Right Sidebar: Copilot */}
             <div className="lg:col-span-3">
-              <div className="sticky top-28 bg-neutral-900 border border-white/10 shadow-2xl rounded-[2rem] overflow-hidden flex flex-col h-[600px] max-h-[80vh]">
+              <div className="sticky top-28 bg-neutral-900 border border-white/10 shadow-2xl rounded-[2rem] overflow-hidden flex flex-col h-[450px] sm:h-[600px] max-h-[80vh]">
                 <div className="bg-gradient-to-r from-amber-500 to-orange-500 p-5 flex justify-between items-center shadow-md z-10">
                   <div className="flex items-center gap-3 text-black">
                     <ChefHat className="w-6 h-6" />
