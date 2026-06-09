@@ -73,7 +73,7 @@ export default function ProfilePage() {
   }
 
   return (
-    <div className="min-h-screen bg-neutral-950 text-white p-6 md:p-12 font-sans selection:bg-amber-500/30 relative overflow-x-hidden">
+    <div className="min-h-[100svh] bg-neutral-950 text-white p-6 md:p-12 pb-32 font-sans selection:bg-amber-500/30 relative">
       <WarpShaderBg />
       {/* Header */}
       <header className="bg-neutral-900 border-b border-neutral-800 sticky top-0 z-50 shadow-sm mb-12">
