@@ -96,7 +96,7 @@ export default function ProfilePage() {
         </div>
       </header>
 
-      <div className="max-w-3xl mx-auto">
+      <div className="max-w-3xl mx-auto relative z-10">
         <div className="flex items-center justify-between mb-10 px-4 md:px-0">
           <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight">
             My <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-400 to-orange-500">Profile</span>
