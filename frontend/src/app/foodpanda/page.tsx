@@ -1,11 +1,28 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { ArrowLeft, MapPin, Search } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 export default function FoodPandaPage() {
   const router = useRouter();
+  const [status, setStatus] = useState<'processing' | 'success'>('processing');
+
+  useEffect(() => {
+    const timer1 = setTimeout(() => {
+      setStatus('success');
+    }, 2500);
+
+    const timer2 = setTimeout(() => {
+      router.back();
+    }, 4500);
+
+    return () => {
+      clearTimeout(timer1);
+      clearTimeout(timer2);
+    };
+  }, [router]);
 
   return (
     <div className="min-h-screen bg-[#FFF0F5] text-black overflow-hidden relative font-sans">
@@ -127,9 +144,19 @@ export default function FoodPandaPage() {
           transition={{ delay: 1 }}
           className="bg-white px-8 py-6 rounded-3xl shadow-2xl flex flex-col items-center"
         >
-          <div className="w-16 h-16 border-4 border-neutral-100 border-t-[#D61F69] rounded-full animate-spin mb-4" />
-          <h3 className="text-xl font-black text-black">Processing your cart...</h3>
-          <p className="text-neutral-500 font-medium">Connecting to nearest pandamart</p>
+          {status === 'processing' ? (
+            <>
+              <div className="w-16 h-16 border-4 border-neutral-100 border-t-[#D61F69] rounded-full animate-spin mb-4" />
+              <h3 className="text-xl font-black text-black">Processing your cart...</h3>
+              <p className="text-neutral-500 font-medium">Connecting to nearest pandamart</p>
+            </>
+          ) : (
+            <>
+              <div className="w-16 h-16 bg-green-500 text-white rounded-full flex items-center justify-center text-3xl mb-4 shadow-[0_0_20px_rgba(34,197,94,0.4)]">✓</div>
+              <h3 className="text-xl font-black text-black">Order Placed!</h3>
+              <p className="text-neutral-500 font-medium">Redirecting...</p>
+            </>
+          )}
         </motion.div>
       </div>
 

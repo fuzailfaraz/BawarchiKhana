@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
-import { ChefHat, LogOut, Plus, Sparkles, X, Clock, Flame, Utensils, Mic, MicOff, Camera, ImagePlus, User, Globe, Activity, ToggleLeft, ToggleRight, Leaf, Info } from 'lucide-react';
+import { ChefHat, LogOut, Plus, Sparkles, X, Clock, Flame, Utensils, Mic, MicOff, Camera, ImagePlus, User, Globe, Activity, ToggleLeft, ToggleRight, Leaf, Info, Menu } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/Card';
@@ -39,6 +39,16 @@ export default function DashboardPage() {
   
   const fileInputRef = useRef<HTMLInputElement>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
+  const recipesRef = useRef<HTMLElement>(null);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+
+  useEffect(() => {
+    if (recipes.length > 0 && recipesRef.current) {
+      setTimeout(() => {
+        recipesRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }, 300);
+    }
+  }, [recipes]);
 
   // Sounds
   const [playPop] = useSound('data:audio/mp3;base64,//NExAAAAANIAAAAAExBTUUzLjEwMKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq', { volume: 0.3 });
@@ -339,7 +349,7 @@ export default function DashboardPage() {
               {isUrdu ? 'باورچی خانہ' : 'BawarchiKhana'}
             </span>
           </Link>
-          <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[100] lg:absolute lg:top-1/2 lg:bottom-auto lg:-translate-y-1/2 lg:block w-max max-w-[95vw] overflow-x-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] shadow-[0_0_40px_rgba(0,0,0,0.8)] lg:shadow-none rounded-full">
+          <div className="hidden xl:block absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-[100]">
             <NavHeader links={[
               { label: "Classics", href: "/classics" },
               { label: isUrdu ? 'تاریخ' : 'History', href: "/history" },
@@ -382,17 +392,17 @@ export default function DashboardPage() {
             <div className="absolute inset-0 bg-gradient-to-b from-white/[0.02] to-transparent pointer-events-none" />
 
             {/* Leftover Mode Toggle */}
-            <div className="absolute top-6 right-6 z-20 flex flex-col items-end">
+            <div className="flex justify-end w-full mb-6 z-20">
               <button 
                 onClick={() => setIsLeftoverMode(!isLeftoverMode)}
-                className={`flex items-center gap-2 px-4 py-2 rounded-full border transition-all shadow-[0_0_20px_rgba(0,0,0,0.5)] ${
+                className={`flex items-center gap-2 px-5 py-2.5 rounded-full border transition-all shadow-[0_0_20px_rgba(0,0,0,0.5)] ${
                   isLeftoverMode 
                     ? 'bg-gradient-to-r from-amber-500 to-orange-500 text-black border-none font-bold shadow-[0_0_20px_rgba(245,158,11,0.3)] scale-105' 
                     : 'bg-white/5 border-white/10 text-neutral-400 hover:bg-amber-500/10 hover:border-amber-500/50 hover:text-amber-400 hover:shadow-[0_0_30px_rgba(245,158,11,0.3)]'
                 }`}
                 title="Uses only what you have to minimize waste"
               >
-                <span className="text-sm">Leftover Mode</span>
+                <span className="text-sm font-semibold">Leftover Mode</span>
               </button>
             </div>
 
@@ -421,7 +431,7 @@ export default function DashboardPage() {
                   placeholder={isUrdu ? 'مثلاً چکن، ٹماٹر، پیاز...' : 'e.g., Chicken, Palak, Tomatoes...'}
                   value={currentInput}
                   onChange={(e) => setCurrentInput(e.target.value)}
-                  className={`relative z-10 w-full bg-black/80 border-white/10 focus:border-amber-500/50 text-white placeholder-neutral-500 pl-6 pr-24 py-5 text-base sm:text-lg rounded-2xl shadow-inner transition-all ${isUrdu ? 'text-right' : ''}`}
+                  className={`relative z-10 w-full bg-black/80 border-white/10 focus:border-amber-500/50 text-white placeholder-neutral-500 pl-6 pr-[140px] py-6 text-base sm:text-lg rounded-2xl shadow-inner transition-all ${isUrdu ? 'text-right pr-6 pl-[140px]' : ''}`}
                 />
                 
                 {/* Voice & Camera Input Overlays */}
@@ -635,7 +645,7 @@ export default function DashboardPage() {
 
         {/* Results Section */}
         {recipes.length > 0 && (
-          <section className="w-full relative z-10">
+          <section ref={recipesRef} className="w-full relative z-10 scroll-mt-24">
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
               {recipes.map((recipe, index) => {
                 const eco = getEcoScore(recipe.matchedIngredients, recipe.missingIngredients);
