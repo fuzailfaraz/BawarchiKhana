@@ -11,6 +11,7 @@ import { Api } from '@/lib/api';
 import { MagneticButton } from '@/components/ui/MagneticButton';
 import WarpShaderBg from '@/components/ui/warp-shader';
 import gsap from 'gsap';
+import { toast } from 'react-hot-toast';
 
 export default function AuthPage() {
   const router = useRouter();
