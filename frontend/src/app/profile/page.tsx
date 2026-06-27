@@ -16,6 +16,7 @@ interface UserProfile {
   isPremium: boolean;
   subscriptionExpiresAt: string | null;
   currentPantry: string[];
+  tasteProfile?: any;
   quotaUsed: number;
   createdAt: string;
 }
@@ -302,6 +303,81 @@ export default function ProfilePage() {
             </div>
           </div>
         </div>
+
+        {/* Phase 3: Taste Intelligence Engine UI */}
+        {profile.tasteProfile && (
+          <div
+            style={{
+              marginTop: '24px',
+              background: 'linear-gradient(135deg, rgba(168, 85, 247, 0.1) 0%, rgba(139, 92, 246, 0.05) 100%)',
+              border: '1px solid rgba(168, 85, 247, 0.2)',
+              borderRadius: '24px',
+              padding: 'clamp(20px, 4vw, 32px)',
+              position: 'relative',
+              overflow: 'hidden',
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '24px' }}>
+              <span style={{ fontSize: '24px' }}>🧠</span>
+              <h3 style={{ fontSize: '18px', fontWeight: 600, color: 'white', letterSpacing: '-0.02em' }}>
+                Taste Intelligence
+              </h3>
+            </div>
+            <p style={{ color: '#a3a3a3', fontSize: '14px', marginBottom: '24px', lineHeight: 1.5 }}>
+              BawarchiKhana learns your preferences from every meal you cook. Here is what we've discovered about your palate.
+            </p>
+
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '20px' }}>
+              <div style={{ background: 'rgba(0,0,0,0.4)', borderRadius: '16px', padding: '16px', border: '1px solid rgba(168, 85, 247, 0.1)' }}>
+                <div style={{ fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.1em', color: '#a855f7', fontWeight: 700, marginBottom: '8px' }}>
+                  Top Cuisines
+                </div>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+                  {profile.tasteProfile.favoriteCuisines?.map((c: string) => (
+                    <span key={c} style={{ background: 'rgba(168,85,247,0.2)', color: '#d8b4fe', padding: '4px 10px', borderRadius: '8px', fontSize: '13px', fontWeight: 600 }}>{c}</span>
+                  ))}
+                  {(!profile.tasteProfile.favoriteCuisines || profile.tasteProfile.favoriteCuisines.length === 0) && (
+                    <span style={{ color: '#737373', fontSize: '13px' }}>Needs more data</span>
+                  )}
+                </div>
+              </div>
+              <div style={{ background: 'rgba(0,0,0,0.4)', borderRadius: '16px', padding: '16px', border: '1px solid rgba(168, 85, 247, 0.1)' }}>
+                <div style={{ fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.1em', color: '#a855f7', fontWeight: 700, marginBottom: '8px' }}>
+                  Preferred Spice Level
+                </div>
+                <div style={{ display: 'flex', gap: '2px', alignItems: 'center' }}>
+                  {[1, 2, 3, 4, 5].map((level) => (
+                    <span
+                      key={level}
+                      style={{
+                        fontSize: '18px',
+                        opacity: level <= (profile.tasteProfile.favoriteSpiceLevel || 0) ? 1 : 0.2,
+                        filter: level <= (profile.tasteProfile.favoriteSpiceLevel || 0) ? 'none' : 'grayscale(1)',
+                      }}
+                    >
+                      🌶️
+                    </span>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            {profile.tasteProfile.avoidedIngredients && profile.tasteProfile.avoidedIngredients.length > 0 && (
+              <div style={{ background: 'rgba(0,0,0,0.4)', borderRadius: '16px', padding: '16px', border: '1px solid rgba(239, 68, 68, 0.2)' }}>
+                <div style={{ fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.1em', color: '#ef4444', fontWeight: 700, marginBottom: '8px' }}>
+                  Avoided Ingredients
+                </div>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+                  {profile.tasteProfile.avoidedIngredients.map((ing: string) => (
+                    <span key={ing} style={{ background: 'rgba(239,68,68,0.1)', color: '#fca5a5', border: '1px solid rgba(239,68,68,0.2)', padding: '4px 10px', borderRadius: '8px', fontSize: '13px' }}>
+                      {ing}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
 
         {/* Subscription Card */}
         <div

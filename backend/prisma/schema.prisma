@@ -32,6 +32,13 @@ model User {
   payments              Payment[]
   connectedAccounts     ConnectedAccount[]
   driveExports          DriveExport[]
+  pantryItems           PantryItem[]
+  pantryActions         PantryAction[]
+  tasteProfile          TasteProfile?
+  recipeRatings         RecipeRating[]
+  communityRecipes      CommunityRecipe[]
+  communityRatings      CommunityRating[]
+  recipeComments        RecipeComment[]
 }
 
 model SuggestionHistory {
@@ -58,18 +65,21 @@ model SavedRecipe {
 }
 
 model CookingSession {
-  id          String   @id @default(uuid())
-  userId      String
-  user        User     @relation(fields: [userId], references: [id])
-  dishName    String
-  ingredients String[]
-  recipe      Json
-  rating      Int?
-  feedback    String?
-  tags        String[] @default([])
-  startedAt   DateTime @default(now())
-  completedAt DateTime?
-  
+  id                      String    @id @default(uuid())
+  userId                  String
+  user                    User      @relation(fields: [userId], references: [id])
+  dishName                String
+  ingredientsUsed         String[]  @default([])
+  usedExpiringIngredients Boolean   @default(false)
+  actualCookingTime       Int?
+  recipe                  Json?
+  rating                  Int?
+  feedback                String?
+  tags                    String[]  @default([])
+  startedAt               DateTime  @default(now())
+  completedAt             DateTime?
+  nutritionSnapshot       Json?
+
   @@index([userId, startedAt])
 }
 
@@ -129,4 +139,160 @@ model DriveExport {
   createdAt  DateTime @default(now())
   
   @@index([userId])
+}
+
+// ══════════════════════════════════════════════
+// PANTRY SYSTEM (powers Upgrade 1 + RAG context)
+// ══════════════════════════════════════════════
+
+model PantryItem {
+  id         String    @id @default(uuid())
+  userId     String
+  user       User      @relation(fields: [userId], references: [id])
+  name       String
+  nameUrdu   String?
+  quantity   Float
+  unit       String
+  expiresAt  DateTime?
+  addedAt    DateTime  @default(now())
+
+  @@index([userId, expiresAt])
+}
+
+model PantryAction {
+  id         String   @id @default(uuid())
+  userId     String
+  user       User     @relation(fields: [userId], references: [id])
+  itemName   String
+  action     String
+  quantity   Float?
+  createdAt  DateTime @default(now())
+
+  @@index([userId, action])
+}
+
+// ══════════════════════════════════════════════
+// TASTE PROFILE (powers Upgrade 2 + RAG context)
+// ══════════════════════════════════════════════
+
+model TasteProfile {
+  id                    String   @id @default(uuid())
+  userId                String   @unique
+  user                  User     @relation(fields: [userId], references: [id])
+
+  favoriteSpiceLevel    Int      @default(3)
+  favoriteCuisines      String[]
+  avoidedIngredients    String[]
+  preferredCookingTime  Int      @default(45)
+  preferredDishTypes    String[]
+  explorationScore      Float    @default(0.5)
+  consistencyScore      Float    @default(0.5)
+
+  updatedAt             DateTime @updatedAt
+}
+
+model RecipeRating {
+  id         String   @id @default(uuid())
+  userId     String
+  user       User     @relation(fields: [userId], references: [id])
+  dishName   String
+  rating     Int
+  tags       String[]
+  wouldCook  Boolean?
+  feedback   String?
+  createdAt  DateTime @default(now())
+
+  @@index([userId, rating])
+}
+
+// ══════════════════════════════════════════════
+// COMMUNITY KNOWLEDGE BASE (Upgrade 3 + RAG KB)
+// ══════════════════════════════════════════════
+
+model CommunityRecipe {
+  id              String   @id @default(uuid())
+  creatorId       String
+  creator         User     @relation(fields: [creatorId], references: [id])
+
+  name            String
+  ingredients     String[]
+  instructions    String[]
+  originalDishId  String?
+
+  region          String?
+  occasion        String?
+  difficulty      String?
+  cookTime        Int?
+
+  upvotes         Int      @default(0)
+  isTrending      Boolean  @default(false)
+  tags            String[]
+
+  createdAt       DateTime @default(now())
+
+  ratings         CommunityRating[]
+  comments        RecipeComment[]
+}
+
+model CommunityRating {
+  id        String   @id @default(uuid())
+  recipeId  String
+  recipe    CommunityRecipe @relation(fields: [recipeId], references: [id])
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  rating    Int
+  createdAt DateTime @default(now())
+}
+
+model RecipeComment {
+  id        String   @id @default(uuid())
+  recipeId  String
+  recipe    CommunityRecipe @relation(fields: [recipeId], references: [id])
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  text      String
+  createdAt DateTime @default(now())
+}
+
+// ══════════════════════════════════════════════
+// INGREDIENT MASTER (powers KB 3 + Upgrade 3B)
+// ══════════════════════════════════════════════
+
+model IngredientMaster {
+  id             String   @id @default(uuid())
+  nameEnglish    String
+  nameUrdu       String
+  nameRomanUrdu  String
+  aliases        String[]
+
+  category       String
+  halal          Boolean  @default(true)
+  season         String[]
+  avgPriceGram   Float
+
+  availableIn    String[]
+  substitutes    String[]
+  nutritionPer100g Json
+  commonDishes   String[]
+
+  ragIndexed     Boolean  @default(false)
+}
+
+// ══════════════════════════════════════════════
+// NUTRITION & WASTE (Upgrades 4 + 5)
+// ══════════════════════════════════════════════
+
+model NutritionLog {
+  id           String   @id @default(uuid())
+  userId       String
+  sessionId    String   @unique
+  date         DateTime @default(now())
+
+  calories     Float
+  protein      Float
+  carbs        Float
+  fat          Float
+  fiber        Float
+
+  @@index([userId, date])
 }

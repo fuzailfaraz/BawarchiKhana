@@ -33,7 +33,7 @@ export class AuthService {
     // Simulate sending OTP
     this.logger.log(`[SIMULATED SMS] OTP for ${phone} is: ${otp}`);
 
-    return { message: 'OTP sent successfully', phone };
+    return { message: 'OTP sent successfully', phone, otp };
   }
 
   async verifyOtp(phone: string, otp: string) {

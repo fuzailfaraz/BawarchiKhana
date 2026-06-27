@@ -21,4 +21,9 @@ export class UsersController {
   async updatePantry(@Request() req: any, @Body('pantry') pantry: any[]) {
     return this.usersService.updatePantry(req.user.id, pantry);
   }
+
+  @Get('impact')
+  async getImpact(@Request() req: any) {
+    return this.usersService.getImpact(req.user.id);
+  }
 }

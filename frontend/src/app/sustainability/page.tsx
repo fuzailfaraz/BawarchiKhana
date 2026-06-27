@@ -2,8 +2,9 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { ArrowLeft, Leaf, Droplets, Globe2, Activity, Calculator, Sparkles } from 'lucide-react';
+import { ArrowLeft, Leaf, Droplets, Globe2, Activity, Calculator, Sparkles, CircleDollarSign, CookingPot } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { Api } from '@/lib/api';
 
 const impactData: Record<string, { co2: number, water: number, icon: string, color: string }> = {
   'Beef': { co2: 27.0, water: 15415, icon: '🥩', color: 'from-red-500/20 to-red-900/20 border-red-500/50 text-red-400' },
@@ -19,12 +20,31 @@ const impactData: Record<string, { co2: number, water: number, icon: string, col
 export default function SustainabilityPage() {
   const [savedFood, setSavedFood] = useState(1247.5);
   const [recentSaves, setRecentSaves] = useState<{user: string, item: string, amount: number, id: number}[]>([]);
+  const [userImpact, setUserImpact] = useState<{ itemsSaved: number, moneySaved: number, kgWasteAvoided: number, mealsCooked: number } | null>(null);
   
   // Calculator State
   const [selectedIngredient, setSelectedIngredient] = useState<string>('Beef');
   const [amount, setAmount] = useState<number>(1);
 
   useEffect(() => {
+    // Fetch real impact data from backend
+    const fetchImpact = async () => {
+      try {
+        const data = await Api.get('/users/impact');
+        if (data.wasteSaved) {
+          setUserImpact({
+            itemsSaved: data.wasteSaved.itemsSaved || 0,
+            moneySaved: data.wasteSaved.moneySaved || 0,
+            kgWasteAvoided: data.wasteSaved.kgWasteAvoided || 0,
+            mealsCooked: data.mealsCooked || 0,
+          });
+        }
+      } catch (err) {
+        console.error('Failed to load user impact', err);
+      }
+    };
+    fetchImpact();
+
     // Dynamic global counter ticking up randomly
     const counterInterval = setInterval(() => {
       setSavedFood(prev => prev + (Math.random() * 2));
@@ -111,6 +131,28 @@ export default function SustainabilityPage() {
                 <Globe2 className="w-4 h-4 text-blue-400" /> Saved Globally by users
               </span>
             </div>
+
+            {/* Personal Impact Dashboard (Phase 4) */}
+            {userImpact && (
+              <div className="mt-8 grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div className="bg-neutral-900/60 p-6 rounded-3xl border border-white/5 backdrop-blur-md">
+                  <div className="text-amber-500 mb-2"><CircleDollarSign className="w-6 h-6" /></div>
+                  <div className="text-3xl font-black text-white mb-1">Rs. {userImpact.moneySaved.toLocaleString()}</div>
+                  <div className="text-xs font-bold text-neutral-500 uppercase tracking-wider">Money Saved</div>
+                </div>
+                <div className="bg-neutral-900/60 p-6 rounded-3xl border border-white/5 backdrop-blur-md">
+                  <div className="text-green-500 mb-2"><Leaf className="w-6 h-6" /></div>
+                  <div className="text-3xl font-black text-white mb-1">{userImpact.kgWasteAvoided.toFixed(1)} kg</div>
+                  <div className="text-xs font-bold text-neutral-500 uppercase tracking-wider">Waste Avoided</div>
+                </div>
+                <div className="bg-neutral-900/60 p-6 rounded-3xl border border-white/5 backdrop-blur-md">
+                  <div className="text-blue-500 mb-2"><CookingPot className="w-6 h-6" /></div>
+                  <div className="text-3xl font-black text-white mb-1">{userImpact.mealsCooked}</div>
+                  <div className="text-xs font-bold text-neutral-500 uppercase tracking-wider">Meals Cooked</div>
+                </div>
+              </div>
+            )}
+
           </motion.div>
 
           {/* Live Feed Column */}

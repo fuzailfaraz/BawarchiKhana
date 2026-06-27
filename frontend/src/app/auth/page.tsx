@@ -49,8 +49,24 @@ export default function AuthPage() {
 
     setLoading(true);
     try {
-      await Api.post('/auth/request-otp', { phone });
+      const response = await Api.post('/auth/request-otp', { phone });
       
+      // For demo purposes, display the OTP to the user
+      if (response.otp) {
+        toast.success(
+          (t) => (
+            <div className="flex flex-col gap-1">
+              <span className="font-bold">Demo OTP Received:</span>
+              <span className="text-2xl tracking-[0.3em] font-mono font-black text-amber-500">{response.otp}</span>
+              <span className="text-xs text-neutral-400 mt-1">Check the field, it might be pre-filled!</span>
+            </div>
+          ), 
+          { duration: 8000, position: 'top-center' }
+        );
+        // Pre-fill the OTP to make testing even smoother
+        setOtp(response.otp);
+      }
+
       // Animate transition to step 2
       gsap.to(".auth-step-1", { opacity: 0, x: -20, duration: 0.3, onComplete: () => {
         setStep(2);

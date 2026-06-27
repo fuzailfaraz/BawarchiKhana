@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import Link from 'next/link';
-import { ChefHat, ArrowLeft, CheckCircle2, Clock, Flame, Check, Sparkles, Leaf, Info, AlertTriangle, AlertCircle, ShoppingCart, MessageCircle, X, Send, Timer, Play, Pause, RotateCcw } from 'lucide-react';
+import { ChefHat, ArrowLeft, CheckCircle2, Clock, Flame, Check, Sparkles, Leaf, Info, AlertTriangle, AlertCircle, ShoppingCart, MessageCircle, X, Send, Timer, Play, Pause, RotateCcw, Star } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
 import { Api } from '@/lib/api';
@@ -44,6 +44,12 @@ export default function RecipePage() {
   const [co2Saved, setCo2Saved] = useState(0);
   const [pantryCost, setPantryCost] = useState(0);
   const [missingCost, setMissingCost] = useState(0);
+
+  // Phase 3 Rating State
+  const [rating, setRating] = useState(0);
+  const [hoverRating, setHoverRating] = useState(0);
+  const [feedbackTags, setFeedbackTags] = useState<string[]>([]);
+  const availableTags = ["Too Spicy", "Perfect", "Loved it", "Will make again", "Needs more flavor", "Too salty"];
 
   // Copilot State
   const [isCopilotOpen, setIsCopilotOpen] = useState(true);
@@ -134,12 +140,45 @@ export default function RecipePage() {
     }
   };
 
-  const completeCooking = async () => {
+  const toggleFeedbackTag = (tag: string) => {
+    if (feedbackTags.includes(tag)) {
+      setFeedbackTags(feedbackTags.filter(t => t !== tag));
+    } else {
+      setFeedbackTags([...feedbackTags, tag]);
+    }
+  };
+
+  const completeCooking = () => {
+    // Just move to the final screen to collect rating first
+    setIsFinished(true);
+  };
+
+  const submitCompletion = async (publishToCommunity: boolean = false) => {
     try {
-      await Api.patch(`/recipes/session/${sessionId}/complete`, {});
-      setIsFinished(true);
+      toast.loading('Updating your Taste Profile...', { id: 'completion' });
+      await Api.patch(`/recipes/session/${sessionId}/complete`, {
+        rating,
+        feedback: feedbackTags.join(', ')
+      });
+
+      if (publishToCommunity && session?.recipe) {
+        toast.loading('Publishing to Global Kitchen...', { id: 'publish' });
+        await Api.post('/recipes/community/publish', {
+          dishName: session.recipe.dishName,
+          ingredients: session.recipe.matchedIngredients || [],
+          instructions: session.recipe.instructions || [],
+          originalDishId: sessionId,
+          difficulty: session.recipe.difficulty,
+          cookTime: session.recipe.cookTime ? session.recipe.cookTime.replace(/[^0-9]/g, '') : null
+        });
+        toast.success('Published to Community!', { id: 'publish' });
+      }
+
+      toast.success('Profile updated!', { id: 'completion' });
+      router.push('/dashboard');
     } catch (err: any) {
-      alert('Failed to mark as complete');
+      toast.error('Failed to save session', { id: 'completion' });
+      router.push('/dashboard');
     }
   };
 
@@ -284,18 +323,79 @@ export default function RecipePage() {
         <motion.div
           initial={{ scale: 0.9, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
-          className="container mx-auto px-4 py-32 text-center max-w-2xl relative z-10"
+          className="container mx-auto px-4 py-16 text-center max-w-2xl relative z-10"
         >
-          <div className="w-32 h-32 bg-gradient-to-br from-green-400 to-emerald-600 rounded-full flex items-center justify-center mx-auto mb-8 shadow-[0_0_50px_rgba(52,211,153,0.3)] border-4 border-green-500/20">
-            <CheckCircle2 className="w-16 h-16 text-white" />
+          <div className="w-24 h-24 bg-gradient-to-br from-green-400 to-emerald-600 rounded-full flex items-center justify-center mx-auto mb-6 shadow-[0_0_50px_rgba(52,211,153,0.3)] border-4 border-green-500/20">
+            <CheckCircle2 className="w-12 h-12 text-white" />
           </div>
-          <h1 className="text-5xl font-black font-heading text-white mb-6">Masterpiece Complete!</h1>
-          <p className="text-xl text-neutral-400 mb-10">
-            You successfully cooked <span className="text-amber-400 font-bold">{recipe.dishName}</span>. We hope it tastes as good as it looks!
+          <h1 className="text-4xl font-black font-heading text-white mb-4">Masterpiece Complete!</h1>
+          <p className="text-lg text-neutral-400 mb-8">
+            You successfully cooked <span className="text-amber-400 font-bold">{recipe.dishName}</span>.
           </p>
-          <Button size="lg" onClick={() => router.push('/dashboard')} className="rounded-2xl px-10 py-8 text-lg bg-gradient-to-r from-amber-500 to-orange-500 text-black font-bold shadow-[0_0_20px_rgba(245,158,11,0.3)] hover:scale-105 transition-all">
-            Cook Something Else <Sparkles className="w-6 h-6 ml-2" />
-          </Button>
+
+          <div className="bg-neutral-900/60 border border-white/10 p-8 rounded-3xl mb-8 backdrop-blur-xl">
+            <h3 className="text-xl font-bold text-white mb-4">How was it?</h3>
+            <p className="text-sm text-neutral-400 mb-6">Rate this recipe to improve your personalized suggestions.</p>
+            
+            <div className="flex justify-center gap-2 mb-8">
+              {[1, 2, 3, 4, 5].map((star) => (
+                <button
+                  key={star}
+                  onMouseEnter={() => setHoverRating(star)}
+                  onMouseLeave={() => setHoverRating(0)}
+                  onClick={() => setRating(star)}
+                  className="focus:outline-none transition-transform hover:scale-110"
+                >
+                  <Star
+                    className={`w-10 h-10 transition-colors ${
+                      star <= (hoverRating || rating)
+                        ? 'fill-amber-500 text-amber-500 drop-shadow-[0_0_10px_rgba(245,158,11,0.5)]'
+                        : 'text-neutral-600'
+                    }`}
+                  />
+                </button>
+              ))}
+            </div>
+
+            {rating > 0 && (
+              <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }}>
+                <p className="text-sm font-semibold text-neutral-300 mb-3">Any quick thoughts?</p>
+                <div className="flex flex-wrap justify-center gap-2">
+                  {availableTags.map(tag => (
+                    <button
+                      key={tag}
+                      onClick={() => toggleFeedbackTag(tag)}
+                      className={`px-4 py-2 rounded-full text-sm font-medium border transition-all ${
+                        feedbackTags.includes(tag)
+                          ? 'bg-amber-500 text-black border-amber-500 shadow-[0_0_15px_rgba(245,158,11,0.3)]'
+                          : 'bg-white/5 text-neutral-400 border-white/10 hover:bg-white/10'
+                      }`}
+                    >
+                      {tag}
+                    </button>
+                  ))}
+                </div>
+              </motion.div>
+            )}
+          </div>
+
+          <div className="flex flex-col gap-4">
+            <Button 
+              size="lg" 
+              onClick={() => submitCompletion(false)} 
+              className="w-full rounded-2xl px-10 py-6 text-lg bg-white/10 text-white hover:bg-white/20 transition-all font-bold border border-white/20"
+            >
+              Done & Return to Dashboard
+            </Button>
+            
+            <Button 
+              size="lg" 
+              onClick={() => submitCompletion(true)} 
+              className="w-full rounded-2xl px-10 py-6 text-lg bg-gradient-to-r from-amber-500 to-orange-500 text-black font-bold shadow-[0_0_20px_rgba(245,158,11,0.3)] hover:scale-105 transition-all"
+            >
+              Publish to Global Community <Sparkles className="w-5 h-5 ml-2" />
+            </Button>
+          </div>
         </motion.div>
       ) : (
         <main className="container mx-auto px-4 pt-12 max-w-5xl relative z-10">

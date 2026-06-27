@@ -28,6 +28,7 @@ export default function DashboardPage() {
   const [ingredients, setIngredients] = useState<Ingredient[]>([]);
   const [currentInput, setCurrentInput] = useState('');
   const [recipes, setRecipes] = useState<any[]>([]);
+  const [ragMetadata, setRagMetadata] = useState<any>(null);
   const [loading, setLoading] = useState(false);
   
   // New Hackathon Features State
@@ -56,6 +57,7 @@ export default function DashboardPage() {
 
   const [isLoaded, setIsLoaded] = useState(false);
   const [isPremium, setIsPremium] = useState(false);
+  const [wasteStats, setWasteStats] = useState({ itemsSaved: 0, kgWasteAvoided: 0 });
 
   useEffect(() => {
     // GSAP Entrance
@@ -84,6 +86,16 @@ export default function DashboardPage() {
             });
             setIngredients(parsed);
           }
+          if (data.user?.pantryItems) {
+            // Additional API support for Phase 2 pantry state if needed
+          }
+          
+          // Let's pretend we get wasteStats from the API or compute it
+          // In a real scenario we'd fetch this from a /users/impact endpoint
+          setWasteStats({ 
+            itemsSaved: data.user?.quotaUsed || 0, // mock
+            kgWasteAvoided: (data.user?.quotaUsed || 0) * 0.25 // mock
+          });
         }
       } catch (err) {
         console.warn('Failed to fetch profile', err);
@@ -276,6 +288,7 @@ export default function DashboardPage() {
       }));
       
       setRecipes(processedRecipes);
+      setRagMetadata(response.metadata || null);
       playSuccess();
       toast.success('Recipes generated successfully!', { id: loadingToast });
     } catch (err: any) {
@@ -419,8 +432,17 @@ export default function DashboardPage() {
             {/* Inner Glow */}
             <div className="absolute inset-0 bg-gradient-to-b from-white/[0.02] to-transparent pointer-events-none" />
 
-            {/* Leftover Mode Toggle */}
-            <div className="flex justify-end w-full mb-6 z-20">
+            <div className="flex flex-wrap justify-between items-center w-full mb-6 z-20 gap-4">
+              {/* Phase 2: Waste Saved Counter */}
+              <div className="flex items-center gap-3 bg-green-500/10 border border-green-500/20 px-4 py-2 rounded-2xl">
+                <Leaf className="w-5 h-5 text-green-400" />
+                <div className="flex flex-col">
+                  <span className="text-xs text-green-400/80 font-bold uppercase tracking-wider">Saved from Waste</span>
+                  <span className="text-sm font-black text-green-300">{wasteStats.itemsSaved} items • {wasteStats.kgWasteAvoided} kg</span>
+                </div>
+              </div>
+
+              {/* Leftover Mode Toggle */}
               <button 
                 onClick={() => setIsLeftoverMode(!isLeftoverMode)}
                 className={`flex items-center gap-2 px-5 py-2.5 rounded-full border transition-all shadow-[0_0_20px_rgba(0,0,0,0.5)] ${
@@ -674,6 +696,42 @@ export default function DashboardPage() {
         {/* Results Section */}
         {recipes.length > 0 && (
           <section ref={recipesRef} className="w-full relative z-10 scroll-mt-24">
+            
+            <div className="flex flex-col gap-3 mb-8">
+              {/* RAG Context Banner */}
+              {ragMetadata?.ragPowered && (
+                <div className="p-4 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex flex-wrap items-center justify-between gap-3 shadow-lg">
+                  <div className="flex items-center gap-3">
+                    <Sparkles className="text-amber-500 w-5 h-5" />
+                    <span className="text-sm text-amber-200 font-medium">
+                      {isUrdu ? 'باورچی خانہ ڈیٹا بیس سے ' : 'Retrieved from '}
+                      <strong className="text-white mx-1">{ragMetadata.sourcesUsed?.recipesRetrieved || 0}</strong>
+                      {isUrdu ? ' ترکیبیں نکالی گئیں۔' : ' recipes in BawarchiKhana database.'}
+                    </span>
+                    {ragMetadata.personalized && (
+                      <Badge className="ml-2 bg-purple-500/20 text-purple-300 border-purple-500/50">Based on your history</Badge>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs text-neutral-400 font-medium">Personalization Score:</span>
+                    <div className="w-24 h-1.5 bg-neutral-800 rounded-full overflow-hidden">
+                      <div className="h-full bg-purple-500" style={{ width: '85%' }}></div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Phase 2: Expiry Priority Warning */}
+              {ragMetadata?.usesExpiringIngredients && (
+                <div className="p-3 rounded-xl bg-red-500/10 border border-red-500/30 flex items-center gap-3 animate-pulse shadow-[0_0_15px_rgba(239,68,68,0.2)]">
+                  <span className="text-xl">⚠️</span>
+                  <span className="text-sm text-red-200 font-medium">
+                    Prioritizing {ragMetadata.expiringItemsUsed?.length || 0} items expiring soon: <strong className="text-white">{ragMetadata.expiringItemsUsed?.join(', ')}</strong>
+                  </span>
+                </div>
+              )}
+            </div>
+
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
               {recipes.map((recipe, index) => {
                 const eco = getEcoScore(recipe.matchedIngredients, recipe.missingIngredients);

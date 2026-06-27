@@ -27,4 +27,24 @@ export class RecipesController {
   ) {
     return this.recipesService.completeSession(req.user.id, id, rating, feedback);
   }
+
+  // --- PHASE 5: Community Hub ---
+
+  @Post('community/publish')
+  async publishToCommunity(@Request() req: any, @Body() body: any) {
+    const { dishName, ingredients, instructions, originalDishId, difficulty, cookTime } = body;
+    return this.recipesService.publishToCommunity(req.user.id, {
+      dishName, ingredients, instructions, originalDishId, difficulty, cookTime
+    });
+  }
+
+  @Get('community')
+  async getCommunityRecipes() {
+    return this.recipesService.getCommunityRecipes();
+  }
+
+  @Post('community/:id/upvote')
+  async upvoteCommunityRecipe(@Request() req: any, @Param('id') id: string) {
+    return this.recipesService.upvoteCommunityRecipe(req.user.id, id);
+  }
 }

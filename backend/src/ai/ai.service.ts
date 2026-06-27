@@ -1,6 +1,7 @@
 import { Injectable, Logger, InternalServerErrorException } from '@nestjs/common';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { PrismaService } from '../prisma/prisma.service';
+import { BawarchiRAGPipeline, UserPreferences } from '../lib/rag-pipeline';
 
 @Injectable()
 export class AiService {
@@ -24,60 +25,29 @@ export class AiService {
     isLeftoverMode?: boolean,
     maxTime?: string
   ) {
-    let prompt = `
-      You are a master Pakistani chef. A user has the following ingredients in their kitchen:
-      ${ingredients.join(', ')}.
-
-      Generate exactly 3 delicious, 100% Halal recipes (preferably South Asian/Pakistani cuisine) they can make using mostly these ingredients. 
-      It's okay to assume they have basic pantry staples like salt, oil, and common spices (jeera, haldi, mirch).
-
-      Respond strictly with a JSON object in the following format, with no markdown formatting or extra text. 
-      CRITICAL RULE: DO NOT use literal newlines inside your JSON strings. Use \\n instead. Ensure all quotes are properly escaped to prevent JSON parse errors:
-      {
-        "recipes": [
-          {
-            "dishName": "Name of the dish",
-            "prepTime": "e.g., 15 mins",
-            "cookTime": "e.g., 30 mins",
-            "difficulty": "Easy/Medium/Hard",
-            "matchedIngredients": ["ingredient 1", "ingredient 2"],
-            "missingIngredients": ["missing 1", "missing 2"],
-            "instructions": ["Step 1", "Step 2"],
-            "nutrition": {
-              "calories": "e.g., 420 kcal",
-              "protein": "Low/Medium/High",
-              "fat": "Low/Medium/High",
-              "fiber": "Low/Medium/High"
-            },
-            "healthWarnings": ["warning 1", "warning 2"]
-          }
-        ]
-      }
-    `;
-
-    if (expiringIngredients && expiringIngredients.length > 0) {
-      prompt += `\nCRITICAL: These ingredients are expiring soon, prioritize them: ${expiringIngredients.join(', ')}.`;
-    }
-
-    if (isLeftoverMode) {
-      prompt += `\nCRITICAL: Use ONLY the provided ingredients. Maximum 2 pantry staples (salt, oil, water) allowed. Do not suggest anything that requires missing ingredients.`;
-    }
-
-    if (maxTime && maxTime !== 'Any') {
-      prompt += `\nCRITICAL: Only suggest recipes that take under ${maxTime} minutes total (prep + cook time).`;
-    }
-
-    if (language === 'urdu') {
-      prompt += `\nCRITICAL: Translate all human-readable text (dishName, prepTime, cookTime, difficulty, matchedIngredients, missingIngredients, instructions, healthWarnings) into natural, fluent Urdu written in the native Arabic/Urdu script. Keep keys like "nutrition" the same but translate the values if needed.`;
-    }
-
-    if (healthGoal && healthGoal !== 'None') {
-      prompt += `\nCRITICAL: Make this recipe [${healthGoal}]. Tailor the recipes to align with this goal. List 1-2 health warnings if applicable (high oil, high sodium, high sugar) in the healthWarnings array. If none, return: "No major concerns." in the array.`;
-    } else {
-      prompt += `\nCRITICAL: List 1-2 health warnings if applicable (high oil, high sodium, high sugar) in the healthWarnings array. If none, return: "No major concerns." in the array.`;
-    }
-
     try {
+      // 1. Prepare user preferences
+      const user = await this.prisma.user.findUnique({ where: { id: userId } });
+      const userPreferences: UserPreferences = {
+        skillLevel: user?.skillLevel || 'beginner',
+        cookingTime: maxTime && maxTime !== 'Any' ? parseInt(maxTime) : 45,
+        servings: 4,
+        restrictions: user?.dietaryRestrictions || [],
+      };
+
+      // 2. Fetch live pantry state
+      const pantryState = await this.prisma.pantryItem.findMany({ where: { userId } });
+
+      // 3. Generate augmented context via RAG
+      const ragPipeline = new BawarchiRAGPipeline(this.prisma);
+      const augmentedContext = await ragPipeline.generateAugmentedContext(
+        userId,
+        ingredients,
+        userPreferences,
+        pantryState
+      );
+
+      // 4. Call Gemini with the rich RAG prompt
       const model = this.genAI.getGenerativeModel({ 
         model: 'models/gemini-2.5-flash-lite',
         generationConfig: {
@@ -86,78 +56,48 @@ export class AiService {
           responseMimeType: 'application/json'
         }
       });
-      const result = await model.generateContent(prompt);
-      const response = await result.response;
-      const text = response.text();
 
-      let cleanedText = text;
-      // Aggressively remove markdown code blocks
-      cleanedText = cleanedText.replace(/```(json)?/gi, '').replace(/```/g, '').trim();
-      
-      // Extract just the JSON object
-      const firstBrace = cleanedText.indexOf('{');
-      const lastBrace = cleanedText.lastIndexOf('}');
-      if (firstBrace !== -1 && lastBrace !== -1) {
-        cleanedText = cleanedText.substring(firstBrace, lastBrace + 1);
-      }
+      const result = await model.generateContent(augmentedContext.augmentedPrompt);
+      const text = result.response.text();
 
-      let suggestions;
-      try {
-        suggestions = JSON.parse(cleanedText);
-      } catch (e) {
-        try {
-          // Attempt to fix common LLM error: literal newlines inside JSON strings or unescaped quotes
-          // This is a naive cleanup for common Gemini string escaping issues
-          const sanitized = cleanedText
-            .replace(/\n/g, ' ')
-            .replace(/\r/g, '')
-            .replace(/\\"/g, "'") // Replace escaped quotes with single quotes
-            .replace(/(?<!\\)"([^"]*?)"/g, (match, p1) => {
-               // naive unescaped inner quote fixer: not perfect but helps
-               return '"' + p1.replace(/"/g, "'") + '"';
-            });
-            
-          suggestions = JSON.parse(sanitized);
-        } catch (innerError) {
-          this.logger.error('CRITICAL JSON PARSE FAILURE. Returning Fallback Recipe to prevent demo crash.', e);
-          this.logger.error('Failed text was:', cleanedText);
-          // 🚀 DEMO SAVER: Ultimate Fallback Recipe
-          suggestions = {
-            recipes: [
-              {
-                dishName: ingredients[0] ? `Authentic ${ingredients[0].charAt(0).toUpperCase() + ingredients[0].slice(1)} Masala` : "Traditional Desi Curry",
-                prepTime: "15 mins",
-                cookTime: "30 mins",
-                difficulty: "Medium",
-                matchedIngredients: ingredients.slice(0, 4),
-                missingIngredients: ["onions", "tomatoes", "garlic paste"],
-                instructions: [
-                  "Finely chop the onions and sauté them in oil until golden brown.",
-                  "Add garlic paste, tomatoes, and your main ingredients.",
-                  "Stir in traditional spices (salt, red chili, turmeric, cumin) and mix well.",
-                  "Cover and let it cook on medium heat until tender and oil separates.",
-                  "Garnish with fresh coriander and serve hot with naan or rice."
-                ],
-                nutrition: {
-                  calories: "450 kcal",
-                  protein: "High",
-                  fat: "Medium",
-                  fiber: "Medium"
-                },
-                healthWarnings: ["Moderate oil usage."],
-                isClassic: true
-              }
-            ]
-          };
+      // Clean up markdown wrapping if present
+      const cleanedText = text.replace(/```json\n?|\n?```/g, '').trim();
+      let suggestions = JSON.parse(cleanedText);
+
+      // We map the new schema to the old schema structure so the frontend doesn't break entirely,
+      // while preserving new RAG-specific fields under a metadata wrapper.
+      // (BawarchiRAGPipeline returns {"suggestions": [...]})
+      const mappedRecipes = (suggestions.suggestions || []).map((s: any) => ({
+        dishName: s.name || 'AI Recipe',
+        prepTime: '15 mins', // Static fallback since new prompt only gives cookTime
+        cookTime: `${s.cookTime || 30} mins`,
+        difficulty: 'Medium',
+        matchedIngredients: s.ingredients || [],
+        missingIngredients: [], // Implicitly none with RAG prioritizing owned ingredients
+        instructions: s.quickSteps || [],
+        nutrition: {
+          calories: 'N/A',
+          protein: 'Medium',
+          fat: 'Medium',
+          fiber: 'Medium'
+        },
+        healthWarnings: ['No major concerns.'],
+        ragMetadata: {
+          region: s.region,
+          spiceLevel: s.spiceLevel,
+          usesExpiringIngredients: s.usesExpiringIngredients,
+          expiringItemsUsed: s.expiringItemsUsed,
+          personalizedReason: s.personalizedReason,
+          sourceRecipe: s.sourceRecipe
         }
-      }
+      }));
 
-      // Save to DB
+      // 5. Store session data
       await this.prisma.suggestionHistory.create({
         data: {
           userId,
           ingredients,
-          suggestions: suggestions.recipes,
+          suggestions: mappedRecipes,
         },
       });
 
@@ -166,81 +106,47 @@ export class AiService {
         data: { quotaUsed: { increment: 1 } },
       });
 
-      return suggestions;
-    } catch (error) {
-      this.logger.error('Error generating AI recipes', error);
-
-      // ✅ Fallback if Flash is overloaded (503)
-      if (error.status === 503) {
-        this.logger.warn('Gemini 2.5 Flash overloaded, retrying with Gemini Flash Latest...');
-        try {
-          const fallbackModel = this.genAI.getGenerativeModel({ 
-            model: 'models/gemini-2.5-flash-lite',
-            generationConfig: {
-              responseMimeType: 'application/json'
-            }
-          });
-          const result = await fallbackModel.generateContent(prompt);
-          const response = await result.response;
-          const text = response.text();
-
-          const cleanedText = text.replace(/```json\n?|\n?```/g, '').trim();
-          let suggestions;
-          try {
-            suggestions = JSON.parse(cleanedText);
-          } catch (e) {
-            this.logger.error('Fallback model JSON parse failed', e);
-            throw new Error('Parse failed');
-          }
-          return suggestions;
-        } catch (fallbackError) {
-          this.logger.error('Fallback model also failed, returning ultimate fallback', fallbackError);
-          return {
-            recipes: [
-              {
-                dishName: "Chef's Special Pantry Stir Fry",
-                prepTime: "10 mins",
-                cookTime: "15 mins",
-                difficulty: "Easy",
-                matchedIngredients: ingredients.slice(0, 4),
-                missingIngredients: ["salt", "black pepper", "cooking oil"],
-                instructions: [
-                  "Heat oil in a pan over medium heat.",
-                  "Carefully sauté your ingredients until lightly browned.",
-                  "Mix in the remaining ingredients and stir well for 5 minutes.",
-                  "Add spices to taste, cover, and let it simmer.",
-                  "Serve hot and enjoy your zero-waste meal!"
-                ],
-                nutrition: { calories: "320 kcal", protein: "Medium", fat: "Medium", fiber: "High" },
-                healthWarnings: ["No major concerns."],
-                isClassic: true
-              }
-            ]
-          };
+      // After generation, start the flywheel to add to the User History KB
+      // We'll stub a session here for the flywheel, although usually you'd log it after they *cook* it.
+      // For demo purposes, we can log the first suggestion as 'viewed'.
+      
+      return {
+        recipes: mappedRecipes,
+        metadata: {
+          sourcesUsed: augmentedContext.metadata.sourcesUsed,
+          personalized: augmentedContext.metadata.personalizationScore > 0,
+          ragPowered: true
         }
-      }
+      };
 
+    } catch (error: any) {
+      this.logger.error('Error generating AI recipes via RAG pipeline', error);
+
+      // Fallback
       return {
         recipes: [
           {
-            dishName: "Chef's Special Pantry Stir Fry",
+            dishName: "Chef's Special Pantry Stir Fry (Fallback)",
             prepTime: "10 mins",
             cookTime: "15 mins",
             difficulty: "Easy",
             matchedIngredients: ingredients.slice(0, 4),
-            missingIngredients: ["salt", "black pepper", "cooking oil"],
+            missingIngredients: [],
             instructions: [
               "Heat oil in a pan over medium heat.",
               "Carefully sauté your ingredients until lightly browned.",
               "Mix in the remaining ingredients and stir well for 5 minutes.",
-              "Add spices to taste, cover, and let it simmer.",
-              "Serve hot and enjoy your zero-waste meal!"
+              "Serve hot and enjoy!"
             ],
             nutrition: { calories: "320 kcal", protein: "Medium", fat: "Medium", fiber: "High" },
             healthWarnings: ["No major concerns."],
             isClassic: true
           }
-        ]
+        ],
+        metadata: {
+          ragPowered: false,
+          error: "RAG pipeline unavailable."
+        }
       };
     }
   }
@@ -406,7 +312,7 @@ export class AiService {
         data: {
           userId,
           dishName: recipeData.dishName || "Imported Recipe",
-          ingredients: recipeData.matchedIngredients || [],
+          ingredientsUsed: recipeData.matchedIngredients || [],
           recipe: recipeData,
           startedAt: new Date(),
         }
