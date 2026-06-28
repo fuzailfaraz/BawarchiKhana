@@ -7,6 +7,11 @@ import { BawarchiRAGPipeline, UserPreferences } from '../lib/rag-pipeline';
 export class AiService {
   private readonly logger = new Logger(AiService.name);
   private genAI: GoogleGenerativeAI;
+  private readonly MODELS = [
+    'models/gemini-2.0-flash',
+    'models/gemini-2.5-flash-lite',
+    'models/gemini-1.5-flash',
+  ];
 
   constructor(private prisma: PrismaService) {
     const apiKey = process.env.GeminiAI_API_KEY;
@@ -14,6 +19,43 @@ export class AiService {
       this.logger.warn('GeminiAI_API_KEY is not set in environment variables');
     }
     this.genAI = new GoogleGenerativeAI(apiKey || 'fallback');
+  }
+
+  /**
+   * Tries to call Gemini with automatic model fallback.
+   * If a model returns 503 / 429 / 404, tries the next model in the list.
+   */
+  private async callGeminiWithFallback(
+    prompt: string | any[],
+    config?: { maxOutputTokens?: number; temperature?: number; responseMimeType?: string }
+  ) {
+    for (const modelName of this.MODELS) {
+      try {
+        const model = this.genAI.getGenerativeModel({
+          model: modelName,
+          generationConfig: config ? {
+            maxOutputTokens: config.maxOutputTokens,
+            temperature: config.temperature,
+            responseMimeType: config.responseMimeType,
+          } : undefined,
+        });
+        const result = await model.generateContent(prompt as any);
+        this.logger.log(`Gemini call succeeded with model: ${modelName}`);
+        return result;
+      } catch (err: any) {
+        const status = err?.status || err?.message || '';
+        this.logger.warn(`Model ${modelName} failed: ${status}`);
+        // If it's a retryable error (503, 429), try next model
+        if (String(status).includes('503') || String(status).includes('429') || 
+            String(status).includes('high demand') || String(status).includes('404') ||
+            String(status).includes('Not Found')) {
+          continue;
+        }
+        // For other errors (like invalid key), throw immediately
+        throw err;
+      }
+    }
+    throw new Error('All Gemini models unavailable');
   }
 
   async suggestRecipes(
@@ -48,17 +90,11 @@ export class AiService {
         pantryState
       );
 
-      // 4. Call Gemini with the rich RAG prompt
-      const model = this.genAI.getGenerativeModel({ 
-        model: 'models/gemini-2.5-flash-lite',
-        generationConfig: {
-          maxOutputTokens: 3000,
-          temperature: 0.2,
-          responseMimeType: 'application/json'
-        }
-      });
-
-      const result = await model.generateContent(augmentedContext.augmentedPrompt);
+      // 4. Call Gemini with the rich RAG prompt (with model fallback)
+      const result = await this.callGeminiWithFallback(
+        augmentedContext.augmentedPrompt,
+        { maxOutputTokens: 3000, temperature: 0.2, responseMimeType: 'application/json' }
+      );
       const text = result.response.text();
 
       // Clean up markdown wrapping if present
@@ -165,16 +201,14 @@ export class AiService {
         Do not include markdown blocks or any other text.
       `;
 
-      const model = this.genAI.getGenerativeModel({ model: 'models/gemini-2.5-flash-lite' });
-      
       const imagePart = {
         inlineData: {
           data: base64Data,
-          mimeType: 'image/jpeg' // Defaulting to jpeg for generic base64 upload
+          mimeType: 'image/jpeg'
         }
       };
 
-      const result = await model.generateContent([prompt, imagePart]);
+      const result = await this.callGeminiWithFallback([prompt, imagePart]);
       const text = result.response.text();
       
       const cleanedText = text.replace(/```json\n?|\n?```/g, '').trim();
@@ -194,14 +228,6 @@ export class AiService {
 
   async chatWithCopilot(message: string, recipeContext: any, history: any[] = []) {
     try {
-      const model = this.genAI.getGenerativeModel({ model: 'models/gemini-2.5-flash-lite' });
-      const chat = model.startChat({
-        history: history.map(msg => ({
-          role: msg.role,
-          parts: [{ text: msg.content }],
-        })),
-      });
-
       const systemPrompt = `
         You are BawarchiKhana's Cooking Copilot, a helpful AI cooking assistant.
         The user is currently cooking this recipe:
@@ -214,7 +240,7 @@ export class AiService {
         User's question: ${message}
       `;
 
-      const result = await chat.sendMessage(systemPrompt);
+      const result = await this.callGeminiWithFallback(systemPrompt);
       const response = result.response;
       return { reply: response.text() };
     } catch (error) {
