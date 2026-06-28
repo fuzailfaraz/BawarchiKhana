@@ -144,4 +144,81 @@ export class RecipesService {
 
     return recipe;
   }
+
+  async seedCommunity() {
+    // Check if recipes exist
+    const count = await this.prisma.communityRecipe.count();
+    if (count > 0) return { message: 'Already seeded' };
+
+    // Get any user to own these recipes
+    let user = await this.prisma.user.findFirst();
+    if (!user) {
+      user = await this.prisma.user.create({
+        data: {
+          phone: '+920000000000',
+          name: 'Bawarchi Chef',
+          skillLevel: 'expert',
+        }
+      });
+    }
+
+    const recipes = [
+      {
+        name: 'Lahori Chicken Karahi',
+        ingredients: ['chicken', 'tomatoes', 'green chilies', 'ginger', 'garlic', 'black pepper', 'oil'],
+        instructions: ['Heat oil and fry chicken until brown.', 'Add ginger-garlic paste and tomatoes.', 'Cook until tomatoes break down into a rich gravy.', 'Garnish with green chilies and julienned ginger.'],
+        difficulty: 'Medium',
+        cookTime: 40,
+        upvotes: 125,
+        isTrending: true,
+      },
+      {
+        name: 'Classic Beef Biryani',
+        ingredients: ['beef', 'basmati rice', 'onions', 'yogurt', 'biryani masala', 'mint', 'coriander'],
+        instructions: ['Marinate beef with yogurt and spices.', 'Fry onions until golden brown.', 'Cook beef until tender.', 'Layer partially cooked rice over the beef gravy.', 'Steam (dum) for 15 minutes.'],
+        difficulty: 'Hard',
+        cookTime: 90,
+        upvotes: 89,
+        isTrending: true,
+      },
+      {
+        name: 'Quick Masala Oats',
+        ingredients: ['oats', 'onions', 'tomatoes', 'green chilies', 'turmeric', 'salt', 'oil'],
+        instructions: ['Sauté onions and green chilies in oil.', 'Add chopped tomatoes and turmeric.', 'Add water and bring to a boil.', 'Stir in oats and cook for 3 minutes until thick.'],
+        difficulty: 'Easy',
+        cookTime: 10,
+        upvotes: 42,
+        isTrending: false,
+      },
+      {
+        name: 'Peshawari Chapli Kabab',
+        ingredients: ['minced beef', 'onions', 'tomatoes', 'coriander seeds', 'pomegranate seeds', 'egg', 'wheat flour'],
+        instructions: ['Mix all ingredients and knead well.', 'Form flat, large patties.', 'Shallow fry in beef tallow or oil until crispy on both sides.'],
+        difficulty: 'Medium',
+        cookTime: 25,
+        upvotes: 210,
+        isTrending: true,
+      },
+      {
+        name: 'Creamy Butter Chicken',
+        ingredients: ['chicken breast', 'butter', 'cream', 'tomato puree', 'garam masala', 'kasuri methi'],
+        instructions: ['Marinate and grill chicken pieces.', 'In a pan, melt butter and add tomato puree.', 'Simmer with spices until oil separates.', 'Add chicken and cream, finish with kasuri methi.'],
+        difficulty: 'Medium',
+        cookTime: 45,
+        upvotes: 18,
+        isTrending: false,
+      }
+    ];
+
+    for (const r of recipes) {
+      await this.prisma.communityRecipe.create({
+        data: {
+          ...r,
+          creatorId: user.id
+        }
+      });
+    }
+
+    return { message: 'Seeded successfully' };
+  }
 }

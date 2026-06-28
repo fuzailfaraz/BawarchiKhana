@@ -73,11 +73,11 @@ export default function CommunityHubPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#050505] text-white selection:bg-purple-500/30 relative overflow-hidden">
+    <div className="min-h-screen bg-[#050505] text-white selection:bg-amber-500/30 relative overflow-hidden">
       {/* Background Ambience */}
       <div className="fixed inset-0 w-full h-full -z-10 pointer-events-none">
-        <div className="absolute top-[-20%] right-[-10%] w-[50vw] h-[50vw] bg-purple-600/10 rounded-full blur-[150px]" />
-        <div className="absolute bottom-[-20%] left-[-10%] w-[60vw] h-[60vw] bg-pink-600/10 rounded-full blur-[150px]" />
+        <div className="absolute top-[-20%] right-[-10%] w-[50vw] h-[50vw] bg-amber-600/10 rounded-full blur-[150px]" />
+        <div className="absolute bottom-[-20%] left-[-10%] w-[60vw] h-[60vw] bg-orange-600/10 rounded-full blur-[150px]" />
       </div>
 
       {/* Header */}
@@ -85,7 +85,7 @@ export default function CommunityHubPage() {
         <div className="container mx-auto px-4 h-20 flex items-center justify-between">
           <Link href="/" className="flex items-center gap-2 group">
             <span className="text-3xl group-hover:scale-110 transition-transform">🌍</span>
-            <span className="text-2xl font-bold font-heading text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-500 tracking-tight">Community Hub</span>
+            <span className="text-2xl font-bold font-heading text-transparent bg-clip-text bg-gradient-to-r from-amber-400 to-orange-500 tracking-tight">Community Hub</span>
           </Link>
           <Button variant="ghost" size="sm" onClick={() => router.push('/dashboard')} className="text-neutral-400 hover:text-white font-medium">
             <ArrowLeft className="h-4 w-4 mr-2" /> Dashboard
@@ -98,7 +98,7 @@ export default function CommunityHubPage() {
         <div className="text-center max-w-3xl mx-auto mb-20">
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
             <h1 className="text-5xl md:text-7xl font-black font-heading tracking-tight mb-6 text-white">
-              The <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-400 via-pink-500 to-rose-500">Global Kitchen</span>
+              The <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-400 via-orange-500 to-red-500">Global Kitchen</span>
             </h1>
             <p className="text-neutral-400 text-xl font-light leading-relaxed">
               Discover creations from home chefs around the world. Top-rated recipes are automatically ingested into BawarchiKhana's AI Knowledge Base for everyone to enjoy!
@@ -108,7 +108,7 @@ export default function CommunityHubPage() {
 
         {loading ? (
           <div className="flex justify-center items-center py-20">
-            <div className="animate-spin text-purple-500"><Sparkles className="w-10 h-10" /></div>
+            <div className="animate-spin text-amber-500"><Sparkles className="w-10 h-10" /></div>
           </div>
         ) : (
           <>
@@ -179,7 +179,7 @@ function RecipeCard({ recipe, index, onUpvote, onCook, isLoading, isTrending }: 
       transition={{ delay: index * 0.1 }}
       className="h-full"
     >
-      <Card className="flex flex-col h-full bg-neutral-900/60 backdrop-blur-xl border-white/5 hover:border-purple-500/50 hover:shadow-[0_0_40px_rgba(168,85,247,0.15)] transition-all overflow-hidden rounded-[2rem] group relative">
+      <Card className="flex flex-col h-full bg-neutral-900/60 backdrop-blur-xl border-white/5 hover:border-amber-500/50 hover:shadow-[0_0_40px_rgba(245,158,11,0.15)] transition-all overflow-hidden rounded-[2rem] group relative">
         {isTrending && (
           <div className="absolute top-0 right-0 w-32 h-32 bg-rose-500/10 rounded-full blur-[40px] pointer-events-none" />
         )}
@@ -187,7 +187,7 @@ function RecipeCard({ recipe, index, onUpvote, onCook, isLoading, isTrending }: 
         <CardHeader className="pb-4 relative z-10">
           <div className="flex justify-between items-start mb-2">
             <Badge variant="outline" className="bg-black/50 text-neutral-300 border-white/10 backdrop-blur-md">
-              <ChefHat className="w-3 h-3 mr-1 text-purple-400"/> 
+              <ChefHat className="w-3 h-3 mr-1 text-amber-400"/> 
               By {recipe.creator?.name || 'Chef'}
             </Badge>
             <button 
@@ -197,7 +197,7 @@ function RecipeCard({ recipe, index, onUpvote, onCook, isLoading, isTrending }: 
               <Heart className="w-4 h-4 fill-current" /> {recipe.upvotes}
             </button>
           </div>
-          <CardTitle className="text-2xl font-bold text-white group-hover:text-purple-300 transition-colors">{recipe.name}</CardTitle>
+          <CardTitle className="text-2xl font-bold text-white group-hover:text-amber-300 transition-colors">{recipe.name}</CardTitle>
         </CardHeader>
         
         <CardContent className="flex-1 py-4 space-y-4 relative z-10">
@@ -224,7 +224,7 @@ function RecipeCard({ recipe, index, onUpvote, onCook, isLoading, isTrending }: 
         
         <CardFooter className="pt-4 pb-6 px-6 relative z-10">
           <Button 
-            className="w-full rounded-xl bg-purple-600 hover:bg-purple-500 text-white shadow-[0_0_15px_rgba(147,51,234,0.3)] py-6 font-bold" 
+            className="w-full rounded-xl bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-400 hover:to-orange-500 text-white shadow-[0_0_15px_rgba(245,158,11,0.3)] py-6 font-bold" 
             onClick={onCook}
             disabled={isLoading}
           >

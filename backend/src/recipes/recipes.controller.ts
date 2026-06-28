@@ -46,6 +46,11 @@ export class RecipesController {
     return this.recipesService.getCommunityRecipes();
   }
 
+  @Post('community/seed')
+  async seedCommunity() {
+    return this.recipesService.seedCommunity();
+  }
+
   @Post('community/:id/upvote')
   @UseGuards(JwtAuthGuard)
   async upvoteCommunityRecipe(@Request() req: any, @Param('id') id: string) {
