@@ -159,21 +159,24 @@ export class BawarchiRAGPipeline {
   }
 
   private async retrieveCulturalContext(preferences: UserPreferences) {
-    const contextQuery = `Pakistani cooking context for ${this.getCurrentSeason()} ${this.getCurrentOccasion()}`;
-    const embedding = await generateEmbedding(contextQuery);
-    const vectorString = `[${embedding.join(',')}]`;
-    
-    // NOTE: Requires a cultural_context_embeddings table if you have one.
-    // Assuming recipe_embeddings is the source if cultural_context is missing
-    const results = await this.prisma.$queryRawUnsafe<any[]>(`
-      SELECT content 
-      FROM recipe_embeddings 
-      WHERE 1 - (embedding <=> $1::vector) > 0.7
-      ORDER BY 1 - (embedding <=> $1::vector) DESC 
-      LIMIT 1
-    `, vectorString);
-    
-    return results?.[0]?.content || '';
+    try {
+      const contextQuery = `Pakistani cooking context for ${this.getCurrentSeason()} ${this.getCurrentOccasion()}`;
+      const embedding = await generateEmbedding(contextQuery);
+      if (this.isZeroVector(embedding)) return '';
+      const vectorString = `[${embedding.join(',')}]`;
+      
+      const results = await this.prisma.$queryRawUnsafe<any[]>(`
+        SELECT content 
+        FROM recipe_embeddings 
+        WHERE 1 - (embedding <=> $1::vector) > 0.7
+        ORDER BY 1 - (embedding <=> $1::vector) DESC 
+        LIMIT 1
+      `, vectorString);
+      
+      return results?.[0]?.content || '';
+    } catch {
+      return '';
+    }
   }
 
   private buildAugmentedPrompt(ctx: PromptContext): string {
@@ -288,70 +291,80 @@ export class BawarchiRAGPipeline {
 
   // ─── After session: feed back into user's personal KB (flywheel) ───────────
   async storeSessionInPersonalKB(session: CookingSession) {
-    if (!session.dishName) return;
-    const document = [
-      'Cooked: ' + session.dishName,
-      'Date: ' + (session.completedAt ? session.completedAt.toISOString().split('T')[0] : new Date().toISOString().split('T')[0]),
-      'Rating: ' + (session.rating || 0) + '/5 stars',
-      'Feedback: ' + (session.feedback || 'No feedback'),
-      'Tags: ' + (session.tags?.join(', ') || ''),
-      'Ingredients: ' + session.ingredientsUsed.join(', '),
-      'Cook time: ' + (session.actualCookingTime || 'Unknown') + ' minutes',
-      (session.rating && session.rating >= 4) ? 'User loved this dish — high priority for future recommendations.' : '',
-      (session.rating && session.rating <= 2) ? 'User did not enjoy this dish — avoid suggesting similar.' : '',
-    ].filter(Boolean).join('\n').trim();
+    try {
+      if (!session.dishName) return;
+      const document = [
+        'Cooked: ' + session.dishName,
+        'Date: ' + (session.completedAt ? session.completedAt.toISOString().split('T')[0] : new Date().toISOString().split('T')[0]),
+        'Rating: ' + (session.rating || 0) + '/5 stars',
+        'Feedback: ' + (session.feedback || 'No feedback'),
+        'Tags: ' + (session.tags?.join(', ') || ''),
+        'Ingredients: ' + session.ingredientsUsed.join(', '),
+        'Cook time: ' + (session.actualCookingTime || 'Unknown') + ' minutes',
+        (session.rating && session.rating >= 4) ? 'User loved this dish — high priority for future recommendations.' : '',
+        (session.rating && session.rating <= 2) ? 'User did not enjoy this dish — avoid suggesting similar.' : '',
+      ].filter(Boolean).join('\n').trim();
 
-    const embedding = await generateEmbedding(document);
-    const vectorString = `[${embedding.join(',')}]`;
+      const embedding = await generateEmbedding(document);
+      if (this.isZeroVector(embedding)) return;
+      const vectorString = `[${embedding.join(',')}]`;
 
-    await this.prisma.$executeRawUnsafe(`
-      INSERT INTO user_history_embeddings (user_id, content, embedding, metadata)
-      VALUES ($1, $2, $3::vector, $4::jsonb)
-    `, 
-      session.userId, 
-      document, 
-      vectorString, 
-      {
-        dishName: session.dishName,
-        rating: session.rating,
-        tags: session.tags,
-        dateCooked: session.completedAt || new Date()
-      }
-    );
+      await this.prisma.$executeRawUnsafe(`
+        INSERT INTO user_history_embeddings (user_id, content, embedding, metadata)
+        VALUES ($1, $2, $3::vector, $4::jsonb)
+      `, 
+        session.userId, 
+        document, 
+        vectorString, 
+        {
+          dishName: session.dishName,
+          rating: session.rating,
+          tags: session.tags,
+          dateCooked: session.completedAt || new Date()
+        }
+      );
+    } catch (e) {
+      console.warn('storeSessionInPersonalKB failed (non-critical):', (e as Error).message);
+    }
   }
 
   async ingestTrendingCommunityRecipe(recipe: any) {
-    const document = [
-      'Title: ' + recipe.name,
-      'Trending Community Recipe',
-      'Difficulty: ' + (recipe.difficulty || 'Unknown'),
-      'Cook Time: ' + (recipe.cookTime || 'Unknown') + ' minutes',
-      'Upvotes: ' + recipe.upvotes,
-      'Ingredients: ' + recipe.ingredients.join(', '),
-      'Instructions:',
-      recipe.instructions.join('\n'),
-    ].join('\n').trim();
+    try {
+      const document = [
+        'Title: ' + recipe.name,
+        'Trending Community Recipe',
+        'Difficulty: ' + (recipe.difficulty || 'Unknown'),
+        'Cook Time: ' + (recipe.cookTime || 'Unknown') + ' minutes',
+        'Upvotes: ' + recipe.upvotes,
+        'Ingredients: ' + recipe.ingredients.join(', '),
+        'Instructions:',
+        recipe.instructions.join('\n'),
+      ].join('\n').trim();
 
-    const embedding = await generateEmbedding(document);
-    const vectorString = `[${embedding.join(',')}]`;
+      const embedding = await generateEmbedding(document);
+      if (this.isZeroVector(embedding)) return;
+      const vectorString = `[${embedding.join(',')}]`;
 
-    await this.prisma.$executeRawUnsafe(`
-      INSERT INTO recipe_embeddings (recipe_id, content, embedding, metadata, source)
-      VALUES ($1, $2, $3::vector, $4::jsonb, $5)
-    `,
-      recipe.id || 'community-trending',
-      document,
-      vectorString,
-      {
-        title: recipe.name,
-        difficulty: recipe.difficulty,
-        cookTime: recipe.cookTime,
-        mainIngredients: recipe.ingredients.map((i: string) => i.toLowerCase()),
-        isCommunityTrending: true,
-        communityUpvotes: recipe.upvotes
-      },
-      'community'
-    );
+      await this.prisma.$executeRawUnsafe(`
+        INSERT INTO recipe_embeddings (recipe_id, content, embedding, metadata, source)
+        VALUES ($1, $2, $3::vector, $4::jsonb, $5)
+      `,
+        recipe.id || 'community-trending',
+        document,
+        vectorString,
+        {
+          title: recipe.name,
+          difficulty: recipe.difficulty,
+          cookTime: recipe.cookTime,
+          mainIngredients: recipe.ingredients.map((i: string) => i.toLowerCase()),
+          isCommunityTrending: true,
+          communityUpvotes: recipe.upvotes
+        },
+        'community'
+      );
+    } catch (e) {
+      console.warn('ingestTrendingCommunityRecipe failed (non-critical):', (e as Error).message);
+    }
   }
 
   private daysUntilExpiry(expiresAt?: Date | null): number {
@@ -378,6 +391,10 @@ export class BawarchiRAGPipeline {
   }
 
   private async getTasteProfile(userId: string) {
-    return this.prisma.tasteProfile.findUnique({ where: { userId } });
+    try {
+      return await this.prisma.tasteProfile.findUnique({ where: { userId } });
+    } catch {
+      return null;
+    }
   }
 }

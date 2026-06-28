@@ -36,7 +36,8 @@ export class AiService {
       };
 
       // 2. Fetch live pantry state
-      const pantryState = await this.prisma.pantryItem.findMany({ where: { userId } });
+      let pantryState: any[] = [];
+      try { pantryState = await this.prisma.pantryItem.findMany({ where: { userId } }); } catch { }
 
       // 3. Generate augmented context via RAG
       const ragPipeline = new BawarchiRAGPipeline(this.prisma);
