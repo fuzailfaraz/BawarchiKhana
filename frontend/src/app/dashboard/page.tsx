@@ -367,6 +367,7 @@ export default function DashboardPage() {
               { label: "Classics", href: "/classics" },
               { label: isUrdu ? 'تاریخ' : 'History', href: "/history" },
               { label: "Sustainability", href: "/sustainability" },
+              { label: isUrdu ? 'کمیونٹی' : 'Community', href: "/community" },
               { label: isUrdu ? 'پروفائل' : 'Profile', href: "/profile" },
             ]} />
           </div>
@@ -405,6 +406,7 @@ export default function DashboardPage() {
                   <Link href="/classics" className="px-4 py-3 text-sm font-semibold text-white hover:bg-white/5">Classics</Link>
                   <Link href="/history" className="px-4 py-3 text-sm font-semibold text-white hover:bg-white/5">{isUrdu ? 'تاریخ' : 'History'}</Link>
                   <Link href="/sustainability" className="px-4 py-3 text-sm font-semibold text-white hover:bg-white/5">Sustainability</Link>
+                  <Link href="/community" className="px-4 py-3 text-sm font-semibold text-white hover:bg-white/5">{isUrdu ? 'کمیونٹی' : 'Community'}</Link>
                   <Link href="/profile" className="px-4 py-3 text-sm font-semibold text-amber-400 hover:bg-white/5 border-t border-white/10 mt-1">{isUrdu ? 'پروفائل' : 'Profile'}</Link>
                   <button onClick={handleLogout} className="px-4 py-3 text-sm font-semibold text-red-400 hover:bg-red-500/10 text-left border-t border-white/10">{isUrdu ? 'لاگ آؤٹ' : 'Logout'}</button>
                 </div>
