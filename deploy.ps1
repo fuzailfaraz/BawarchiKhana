@@ -26,7 +26,7 @@ gcloud run deploy bawarchikhana-backend `
   --region asia-south1 `
   --allow-unauthenticated `
   --add-cloudsql-instances "${PROJECT_ID}:asia-south1:bawarchikhanadb" `
-  --set-env-vars "DATABASE_URL=${DB_URL},JWT_SECRET=your-super-secret-jwt-key-change-this,GeminiAI_API_KEY=YOUR_GEMINI_API_KEY"
+  --update-env-vars "DATABASE_URL=${DB_URL},JWT_SECRET=your-super-secret-jwt-key-change-this"
 Set-Location ..
 
 Write-Host "------------------------------------------------------"
