@@ -10,7 +10,7 @@ const genAI = new GoogleGenerativeAI(apiKey);
  */
 export async function generateEmbedding(text: string): Promise<number[]> {
   try {
-    const model = genAI.getGenerativeModel({ model: 'gemini-embedding-exp-03-07' });
+    const model = genAI.getGenerativeModel({ model: 'gemini-embedding-2' });
     const result = await model.embedContent({
       content: { parts: [{ text }], role: 'user' },
     });

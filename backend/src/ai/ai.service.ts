@@ -8,9 +8,10 @@ export class AiService {
   private readonly logger = new Logger(AiService.name);
   private genAI: GoogleGenerativeAI;
   private readonly MODELS = [
+    'models/gemini-3.5-flash',
+    'models/gemini-2.5-flash',
     'models/gemini-2.0-flash',
-    'models/gemini-2.5-flash-lite',
-    'models/gemini-1.5-flash',
+    'models/gemini-flash-latest',
   ];
 
   constructor(private prisma: PrismaService) {
