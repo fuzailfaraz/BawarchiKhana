@@ -78,64 +78,84 @@ export class BawarchiRAGPipeline {
     };
   }
 
-  private async retrieveSimilarRecipes(queryEmbedding: number[], ingredients: string[]) {
-    const vectorString = `[${queryEmbedding.join(',')}]`;
-    const results = await this.prisma.$queryRawUnsafe<any[]>(`
-      SELECT 
-        content,
-        metadata,
-        1 - (embedding <=> $1::vector) as similarity
-      FROM recipe_embeddings
-      WHERE 1 - (embedding <=> $1::vector) > 0.78
-      ORDER BY similarity DESC
-      LIMIT 3
-    `, vectorString);
+  private isZeroVector(v: number[]): boolean {
+    return v.every(x => x === 0);
+  }
 
-    return results.map((r) => ({
-      title: r.metadata?.title,
-      region: r.metadata?.region,
-      content: r.content,
-      similarity: r.similarity,
-      matchedIngredients: ingredients.filter(ing =>
-        r.metadata?.mainIngredients?.includes(ing.toLowerCase())
-      )
-    }));
+  private async retrieveSimilarRecipes(queryEmbedding: number[], ingredients: string[]) {
+    // Skip vector search if embeddings are unavailable
+    if (this.isZeroVector(queryEmbedding)) return [];
+    try {
+      const vectorString = `[${queryEmbedding.join(',')}]`;
+      const results = await this.prisma.$queryRawUnsafe<any[]>(`
+        SELECT 
+          content,
+          metadata,
+          1 - (embedding <=> $1::vector) as similarity
+        FROM recipe_embeddings
+        WHERE 1 - (embedding <=> $1::vector) > 0.78
+        ORDER BY similarity DESC
+        LIMIT 3
+      `, vectorString);
+
+      return results.map((r) => ({
+        title: r.metadata?.title,
+        region: r.metadata?.region,
+        content: r.content,
+        similarity: r.similarity,
+        matchedIngredients: ingredients.filter(ing =>
+          r.metadata?.mainIngredients?.includes(ing.toLowerCase())
+        )
+      }));
+    } catch {
+      return [];
+    }
   }
 
   private async retrievePersonalHistory(userId: string, queryEmbedding: number[]) {
-    const vectorString = `[${queryEmbedding.join(',')}]`;
-    const results = await this.prisma.$queryRawUnsafe<any[]>(`
-      SELECT 
-        content,
-        metadata,
-        1 - (embedding <=> $1::vector) as similarity
-      FROM user_history_embeddings
-      WHERE user_id = $2
-        AND 1 - (embedding <=> $1::vector) > 0.75
-      ORDER BY similarity DESC
-      LIMIT 5
-    `, vectorString, userId);
-    return results || [];
+    if (this.isZeroVector(queryEmbedding)) return [];
+    try {
+      const vectorString = `[${queryEmbedding.join(',')}]`;
+      const results = await this.prisma.$queryRawUnsafe<any[]>(`
+        SELECT 
+          content,
+          metadata,
+          1 - (embedding <=> $1::vector) as similarity
+        FROM user_history_embeddings
+        WHERE user_id = $2
+          AND 1 - (embedding <=> $1::vector) > 0.75
+        ORDER BY similarity DESC
+        LIMIT 5
+      `, vectorString, userId);
+      return results || [];
+    } catch {
+      return [];
+    }
   }
 
   private async retrieveIngredientKnowledge(ingredients: string[]) {
-    const results = await Promise.all(
-      ingredients.slice(0, 5).map(async (ing) => {
-        const embedding = await generateEmbedding(ing);
-        const vectorString = `[${embedding.join(',')}]`;
-        const result = await this.prisma.$queryRawUnsafe<any[]>(`
-          SELECT 
-            content,
-            1 - (embedding <=> $1::vector) as similarity
-          FROM ingredient_embeddings
-          WHERE 1 - (embedding <=> $1::vector) > 0.85
-          ORDER BY similarity DESC
-          LIMIT 1
-        `, vectorString);
-        return result?.[0] || null;
-      })
-    );
-    return results.filter(Boolean);
+    try {
+      const results = await Promise.all(
+        ingredients.slice(0, 5).map(async (ing) => {
+          const embedding = await generateEmbedding(ing);
+          if (this.isZeroVector(embedding)) return null;
+          const vectorString = `[${embedding.join(',')}]`;
+          const result = await this.prisma.$queryRawUnsafe<any[]>(`
+            SELECT 
+              content,
+              1 - (embedding <=> $1::vector) as similarity
+            FROM ingredient_embeddings
+            WHERE 1 - (embedding <=> $1::vector) > 0.85
+            ORDER BY similarity DESC
+            LIMIT 1
+          `, vectorString);
+          return result?.[0] || null;
+        })
+      );
+      return results.filter(Boolean);
+    } catch {
+      return [];
+    }
   }
 
   private async retrieveCulturalContext(preferences: UserPreferences) {
